@@ -1,0 +1,1 @@
+const tensao: number = 5;

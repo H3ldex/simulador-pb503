@@ -1,0 +1,36 @@
+{
+    "compilerOptions": {
+      // Versão de JavaScript que o compilador assume.
+      "target": "ES2022",
+  
+      // Bibliotecas de tipos disponíveis. Só ES2022.
+      // "document" ou "window" na lógica, o compilador dá erro.
+      // Isto GARANTE que a lógica fica separada da interface.
+      "lib": ["ES2022"],
+  
+      // Usar módulos ESM (import/export)
+      "module": "ESNext",
+      // Resolver os imports: o modo pensado para ferramentas como o Vitest e o Vite
+      "moduleResolution": "Bundler",
+  
+      // O tsc só VERIFICA tipos, não gera ficheiros.
+      // Quem executa o código é o Vitest (testes) e mais tarde o Vite (browser).
+      "noEmit": true,
+  
+      // Modo estrito: liga um conjunto de verificações rigorosas (por exemplo, não deixa usar valores que podem ser null sem verificar).
+      "strict": true,
+      // Ao aceder a um array por índice (pinos[3]), o tipo inclui "undefined",
+      // Muito útil: um chip tem 14 pinos e pinos[15] não existe!
+      "noUncheckedIndexedAccess": true,
+      // Num switch, impede passar de um "case" para o seguinte sem "break" por esquecimento
+      "noFallthroughCasesInSwitch": true,
+      // Cada ficheiro tem de poder ser compilado sozinho (requisito do Vitest/Vite)
+      "isolatedModules": true,
+      // Erro se importares "./Chip" e o ficheiro se chamar "./chip" (evita problemas entre Windows/Mac/Linux)
+      "forceConsistentCasingInFileNames": true,
+      // Não verificar os ficheiros de tipos das bibliotecas externas (mais rápido)
+      "skipLibCheck": true
+    },
+    // Pastas que o compilador analisa
+    "include": ["src", "tests"]
+  }
