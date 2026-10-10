@@ -1,0 +1,41 @@
+body {
+    margin: 0;
+    background: #0f1115;
+    color: #e8e8e8;
+    font-family: system-ui, sans-serif;
+}
+
+h1 {
+    font-size: 1.2rem;
+    margin: 16px;
+}
+
+#app {
+    padding: 0 16px 16px;
+}
+
+.placa {
+    display: block;
+    width: 100%;
+    max-width: 1100px;
+    height: auto;
+}
+
+.fundo { fill: #1c1f26; stroke: #3b6fb6; stroke-width: 2; }
+.area { fill: #f1ead9; stroke: #cfc6b0; }
+.furo { fill: #4a4a4a; }
+.rotulo { fill: #e8e8e8; font-size: 8px; }
+
+.led { stroke: #000; stroke-width: 0.5; }
+.led-vermelho { fill: #4a1512; }
+.led-vermelho.aceso { fill: #ff3b30; filter: drop-shadow(0 0 3px #ff3b30); }
+.led-verde { fill: #123a1c; }
+.led-verde.aceso { fill: #34c759; filter: drop-shadow(0 0 3px #34c759); }
+
+.interruptor, .power { cursor: pointer; }
+.interruptor-corpo { fill: #111; stroke: #555; }
+.interruptor-alavanca { fill: #ccc; }
+
+.power rect { fill: #5a1a1a; stroke: #888; }
+.power.ligado rect { fill: #e53935; }
+.power text { fill: #fff; font-size: 10px; font-weight: bold; text-anchor: middle; }

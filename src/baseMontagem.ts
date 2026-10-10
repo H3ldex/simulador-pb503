@@ -61,6 +61,10 @@ export class BaseMontagem {
         return this.furos.size;
     }
 
+    listarFuros(): string[] {
+        return [...this.furos];
+    }
+
     // Um fio liga dois furos
     ligarFio(furoA: string, furoB: string): void {
         this.validarFuro(furoA);
