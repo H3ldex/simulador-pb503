@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ValorLogico } from '../src/valorLogico';
-import { portaNOT, portaAND, portaOR } from '../src/portas';
+import { portaNOT, portaAND, portaOR, portaNOR, portaXOR, portaNAND} from '../src/portas';
 
 describe('portaNOT', () => {
     it('deve retornar 1 se o valor for 0', () => {
@@ -49,5 +49,61 @@ describe('portaOR', () => {
 
     it.each(casos)('OR(%s, %s) = %s', (a, b, esperado) => {
         expect(portaOR(a, b)).toBe(esperado);
+    });
+});
+
+describe('portaXOR', () => {
+    const casos: [ValorLogico, ValorLogico, ValorLogico][] = [
+        // a,   b,   esperado
+        [0,   0,   0],
+        [0,   1,   1],
+        [1,   0,   1],
+        [1,   1,   0],
+        ["Z", "Z", "Z"],
+        [0,   "Z", "Z"],
+        ["Z", 0,   "Z"],
+        [1,   "Z", "Z"],
+        ["Z", 1,   "Z"],
+    ];
+
+    it.each(casos)('XOR(%s, %s) = %s', (a, b, esperado) => {
+        expect(portaXOR(a, b)).toBe(esperado);
+    });
+});
+
+describe('portaNAND', () => {
+    const casos: [ValorLogico, ValorLogico, ValorLogico][] = [
+        // a,   b,   esperado
+        [0,   0,   1],
+        [0,   1,   1],
+        [1,   0,   1],
+        [1,   1,   0],
+        ["Z", "Z", "Z"],
+        [0,   "Z", 1],
+        ["Z", 0,   1],
+        [1,   "Z", "Z"],
+        ["Z", 1,   "Z"],
+    ];
+
+    it.each(casos)('NAND(%s, %s) = %s', (a, b, esperado) => {
+        expect(portaNAND(a, b)).toBe(esperado);
+    });
+});
+
+describe('portaNOR', () => {
+    const casos: [ValorLogico, ValorLogico, ValorLogico][] = [
+        // a,   b,   esperado
+        [0,   0,   1],
+        [0,   1,   0],
+        [1,   0,   0],
+        [1,   1,   0],
+        ["Z", "Z", "Z"],
+        [0,   "Z", "Z"],
+        ["Z", 0,   "Z"],
+        [1,   "Z", 0],
+        ["Z", 1,   0],
+    ];
+    it.each(casos)('NOR(%s, %s) = %s', (a, b, esperado) => {
+        expect(portaNOR(a, b)).toBe(esperado);
     });
 });
