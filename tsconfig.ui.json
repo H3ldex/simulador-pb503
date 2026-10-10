@@ -1,0 +1,10 @@
+{
+    // Herda todas as opções do tsconfig.json da lógica...
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+      // ...e acrescenta os tipos do browser (só para a interface)
+      "lib": ["ES2022", "DOM", "DOM.Iterable"]
+    },
+    // A interface e a lógica que ela usa
+    "include": ["ui", "src"]
+  }
