@@ -3,7 +3,7 @@ import { montarLab1 } from "../src/exemplos/lab1";
 import {
     criar74LS00, criar74LS02, criar74LS04, criar74LS08, criar74LS32, criar74LS86,
 } from "../src/chips/catalogo74LS";
-import { desenharDestaqueDoNo,desenharPlaca, type AcoesDaPlaca } from "./desenho";
+import { desenharDestaqueDoNo, desenharPlaca, desenharSombraDoChip, type AcoesDaPlaca, type SombraDoChip } from "./desenho";
 import { ICONES, type NomeIcone } from "./icons";
 import type { Ponto } from "./layout";
 import { adaptarVista, ampliar, deslocar, nivelDeZoom, vistaAjustada, type Vista } from "./vista";
@@ -460,8 +460,27 @@ function atualizarDestaque(): void {
     if (svg === null) {
         return;
     }
+
+    if (modo.tipo === "chip") {
+        desenharSombraDoChip(svg, sombraDoChip(modo.nome));
+        return;
+    }
+
     const destacar = modo.tipo === "prova" || modo.tipo === "fio";
     desenharDestaqueDoNo(svg, circuito, destacar ? furoSobRato : undefined, modo.tipo === "prova");
+}
+
+// Onde ficaria o chip escolhido, se o rato estiver num furo das linhas A a J
+function sombraDoChip(nome: string): SombraDoChip | undefined {
+    if (furoSobRato === undefined) {
+        return undefined;
+    }
+    try {
+        const { placa, coluna } = posicaoParaChip(furoSobRato);
+        return { nome, placa, coluna, avaliacao: circuito.avaliarMontagem(placa, coluna) };
+    } catch {
+        return undefined;   // o rato está num barramento ou num terminal: sem sombra
+    }
 }
 
 atualizarDestaque();

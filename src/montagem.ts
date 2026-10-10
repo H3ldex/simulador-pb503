@@ -4,16 +4,20 @@ import { TODOS_OS_PINOS, type NumeroPino } from "./pinos";
 const PINOS_POR_LADO = 7;
 const TOTAL_DE_PINOS = 14;
 
-// Furo onde fica um pino de um chip DIP-14 montado a atravessar o canal central,
-// com a marca à esquerda e o pino 1 na coluna indicada.
+// Furo onde ficaria um pino, sem verificar se o chip cabe na breadboard.
 //   pinos 1 a 7  → linha F, da esquerda para a direita
 //   pinos 8 a 14 → linha E, da direita para a esquerda
-export function furoDoPino(placa: number, colunaPino1: number, pino: NumeroPino): string {
-    validarPosicao(placa, colunaPino1);
+export function calcularFuroDoPino(placa: number, colunaPino1: number, pino: NumeroPino): string {
     if (pino <= PINOS_POR_LADO) {
         return `P${placa}:F:${colunaPino1 + pino - 1}`;
     }
     return `P${placa}:E:${colunaPino1 + TOTAL_DE_PINOS - pino}`;
+}
+
+// Furo de um pino de um chip montado a atravessar o canal central, com a marca à esquerda
+export function furoDoPino(placa: number, colunaPino1: number, pino: NumeroPino): string {
+    validarPosicao(placa, colunaPino1);
+    return calcularFuroDoPino(placa, colunaPino1, pino);
 }
 
 // Furos de todos os pinos de um chip montado

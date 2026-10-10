@@ -1,5 +1,7 @@
-import type { Circuito } from "../src/circuito";
+import type { AvaliacaoDeMontagem, Circuito, Fio } from "../src/circuito";
 import { FILAS_ALIMENTACAO, NUMERO_DE_BREADBOARDS, NUMERO_DE_LEDS, furoDoLed } from "../src/BaseMontagem";
+import { furoDoPino } from "../src/montagem";
+import { TODOS_OS_PINOS } from "../src/pinos";
 import type { NumeroInterruptor } from "../src/pb503/interruptores";
 import {
     ALTURA,
@@ -8,13 +10,11 @@ import {
     posicaoDoInterruptor,
     posicaoDoLed,
     retanguloDaBarra,
-    retanguloDoChip,
     retanguloDaBreadboard,
+    retanguloDoChip,
     retanguloDoPower,
+    type Ponto,
 } from "./layout";
-import type { Fio } from "../src/circuito";
-import { furoDoPino } from "../src/montagem";
-import { TODOS_OS_PINOS } from "../src/pinos";
 import type { Vista } from "./vista";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -31,6 +31,16 @@ export interface AcoesDaPlaca {
     aoSairDoFuro(): void;
 }
 
+// O que é preciso para desenhar a sombra de um chip
+export interface SombraDoChip {
+    nome: string;
+    placa: number;
+    coluna: number;
+    avaliacao: AvaliacaoDeMontagem;
+}
+
+// --- Auxiliares ---
+
 // Cria um elemento SVG com os atributos indicados e, opcionalmente, um texto
 function criar(tag: string, atributos: Record<string, string | number>, texto?: string): SVGElement {
     const elemento = document.createElementNS(SVG_NS, tag);
@@ -42,6 +52,23 @@ function criar(tag: string, atributos: Record<string, string | number>, texto?: 
     }
     return elemento;
 }
+
+// Esvazia a camada de destaque e devolve-a (ou null, se não existir)
+function obterCamadaLimpa(svg: SVGElement): Element | null {
+    const camada = svg.querySelector(".camada-destaque");
+    camada?.replaceChildren();
+    return camada;
+}
+
+// Pequena etiqueta de texto junto a um ponto
+function criarEtiqueta(p: Ponto, texto: string, classe = "etiqueta-no"): SVGElement {
+    const etiqueta = criar("g", { class: classe });
+    etiqueta.append(criar("rect", { x: p.x + 6, y: p.y - 18, width: texto.length * 3.9 + 8, height: 12, rx: 3 }));
+    etiqueta.append(criar("text", { x: p.x + 10, y: p.y - 9.5 }, texto));
+    return etiqueta;
+}
+
+// --- Placa ---
 
 export function desenharPlaca(circuito: Circuito, acoes: AcoesDaPlaca, vista: Vista, furoSelecionado?: string): SVGElement {
     const svg = criar("svg", { viewBox: `${vista.x} ${vista.y} ${vista.largura} ${vista.altura}`, class: "placa" });
@@ -92,9 +119,9 @@ function desenharFuros(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca,
         const classe = furo === furoSelecionado ? "furo selecionado" : "furo";
         const quadrado = criar("rect", { x: p.x - 3, y: p.y - 3, width: 6, height: 6, class: classe });
         quadrado.addEventListener("click", () => acoes.aoClicarFuro(furo));
-        svg.append(quadrado);
         quadrado.addEventListener("mouseenter", () => acoes.aoEntrarNoFuro(furo));
         quadrado.addEventListener("mouseleave", () => acoes.aoSairDoFuro());
+        svg.append(quadrado);
     }
 }
 
@@ -173,7 +200,6 @@ function desenharFios(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca):
             y: (a.y + b.y) / 2 - Math.min(distancia * 0.25, 60),
         };
         const cor = corDoFio(fio, indice);
-        
 
         const grupo = criar("g", { class: "fio" });
         grupo.addEventListener("click", () => acoes.aoClicarFio(indice));
@@ -187,8 +213,10 @@ function desenharFios(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca):
             grupo.append(criar("circle", { cx: ponta.x, cy: ponta.y, r: 2.2, fill: cor }));
         }
         svg.append(grupo);
-    }); 
+    });
 }
+
+// --- Camada de destaque ---
 
 // Destaca todos os furos do mesmo nó que o furo indicado (ou limpa o destaque)
 export function desenharDestaqueDoNo(
@@ -197,12 +225,8 @@ export function desenharDestaqueDoNo(
     furo: string | undefined,
     mostrarEtiqueta: boolean,
 ): void {
-    const camada = svg.querySelector(".camada-destaque");
-    if (camada === null) {
-        return;
-    }
-    camada.replaceChildren();
-    if (furo === undefined) {
+    const camada = obterCamadaLimpa(svg);
+    if (camada === null || furo === undefined) {
         return;
     }
 
@@ -217,16 +241,44 @@ export function desenharDestaqueDoNo(
             class: `destaque-no ${classeDoValor}`,
         }));
     }
+
     if (!mostrarEtiqueta) {
         return;
     }
-
-    // Etiqueta junto ao furo
     const quantidade = furos.length === 1 ? "furo isolado" : `${furos.length} furos ligados`;
-    const texto = `${quantidade} · ${valor === "Z" ? "solto" : `valor ${valor}`}`;
-    const p = posicaoDoFuro(furo);
-    const etiqueta = criar("g", { class: "etiqueta-no" });
-    etiqueta.append(criar("rect", { x: p.x + 6, y: p.y - 18, width: texto.length * 3.9 + 8, height: 12, rx: 3 }));
-    etiqueta.append(criar("text", { x: p.x + 10, y: p.y - 9.5 }, texto));
-    camada.append(etiqueta);
+    camada.append(criarEtiqueta(posicaoDoFuro(furo), `${quantidade} · ${valor === "Z" ? "solto" : `valor ${valor}`}`));
+}
+
+// Desenha a sombra do chip escolhido e os furos onde os pinos encaixariam (ou limpa)
+export function desenharSombraDoChip(svg: SVGElement, sombra: SombraDoChip | undefined): void {
+    const camada = obterCamadaLimpa(svg);
+    if (camada === null || sombra === undefined) {
+        return;
+    }
+    const { avaliacao } = sombra;
+
+    // Corpo fantasma: só quando os 14 pinos caem dentro da breadboard
+    if (avaliacao.furos.length === 14) {
+        const r = retanguloDoChip(sombra.placa, sombra.coluna);
+        camada.append(criar("rect", {
+            x: r.x, y: r.y, width: r.largura, height: r.altura, rx: 1.5,
+            class: avaliacao.valida ? "sombra-corpo valida" : "sombra-corpo invalida",
+        }));
+        camada.append(criar("text", { x: r.x + r.largura / 2, y: r.y + r.altura / 2 + 2, class: "sombra-nome" }, sombra.nome));
+    }
+
+    // Furos dos pinos: verdes se livres, vermelhos se ocupados
+    for (const { furo, livre } of avaliacao.furos) {
+        const p = posicaoDoFuro(furo);
+        camada.append(criar("rect", {
+            x: p.x - 4, y: p.y - 4, width: 8, height: 8, rx: 1.5,
+            class: livre ? "sombra-furo livre" : "sombra-furo ocupado",
+        }));
+    }
+
+    // Motivo, junto ao primeiro pino que cabe
+    const primeiro = avaliacao.furos[0];
+    if (!avaliacao.valida && primeiro !== undefined) {
+        camada.append(criarEtiqueta(posicaoDoFuro(primeiro.furo), avaliacao.motivo, "etiqueta-no etiqueta-erro"));
+    }
 }

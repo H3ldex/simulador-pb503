@@ -1,6 +1,6 @@
 import { BaseMontagem, furoDoInterruptor, furoDoLed } from "./BaseMontagem";
-import { furosDoChip } from "./montagem";
-import type { NumeroPino } from "./pinos";
+import { calcularFuroDoPino, furosDoChip } from "./montagem";
+import { TODOS_OS_PINOS, type NumeroPino } from "./pinos";
 import type { ValorLogico } from "./valorLogico";
 import type { EstadoPinos } from "./chips/comum";
 import { FonteAlimentacao, type FilaAlimentacao } from "./pb503/fonte";
@@ -52,6 +52,13 @@ interface ChipMontado {
     furos: Map<NumeroPino, string>;
 }
 
+// Resultado de perguntar "posso montar um chip aqui?"
+export interface AvaliacaoDeMontagem {
+    valida: boolean;
+    motivo: string;
+    furos: { furo: string; livre: boolean }[];   // só os pinos que caem dentro da breadboard
+}
+
 const MAXIMO_DE_ITERACOES = 100;
 const FILAS: FilaAlimentacao[] = ["+5V", "+V", "-V", "0V"];
 const INTERRUPTORES: NumeroInterruptor[] = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -85,6 +92,34 @@ export class Circuito {
         }
         this.chips.push({ chip, placa, colunaPino1, furos });
     }
+
+        // Diz se é possível montar um chip nesta posição, sem o montar
+        avaliarMontagem(placa: number, colunaPino1: number): AvaliacaoDeMontagem {
+            const furos: { furo: string; livre: boolean }[] = [];
+            let todosExistem = true;
+            let algumOcupado = false;
+    
+            for (const pino of TODOS_OS_PINOS) {
+                const furo = calcularFuroDoPino(placa, colunaPino1, pino);
+                if (!this.base.existeFuro(furo)) {
+                    todosExistem = false;
+                    continue;
+                }
+                const livre = !this.furosOcupados.has(furo);
+                if (!livre) {
+                    algumOcupado = true;
+                }
+                furos.push({ furo, livre });
+            }
+    
+            if (!todosExistem) {
+                return { valida: false, motivo: "O chip não cabe aqui: sai da breadboard.", furos };
+            }
+            if (algumOcupado) {
+                return { valida: false, motivo: "Há furos ocupados por outro chip.", furos };
+            }
+            return { valida: true, motivo: "", furos };
+        }
 
     ligarFio(furoA: string, furoB: string): void {
         this.base.ligarFio(furoA, furoB);

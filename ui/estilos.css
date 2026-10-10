@@ -211,3 +211,25 @@ body {
 
 .etiqueta-no rect { fill: #111; opacity: 0.88; }
 .etiqueta-no text { fill: #fff; font-size: 7px; }
+
+.sombra-corpo { opacity: 0.55; }
+.sombra-corpo.valida { fill: #1a1a1a; }
+.sombra-corpo.invalida { fill: #7a1c18; }
+.sombra-nome { fill: #fff; font-size: 6px; font-family: monospace; text-anchor: middle; }
+
+.sombra-furo { stroke-width: 1.5; }
+.sombra-furo.livre { stroke: #34c759; fill: rgba(52, 199, 89, 0.35); }
+.sombra-furo.ocupado { stroke: #ff3b30; fill: rgba(255, 59, 48, 0.45); }
+
+.etiqueta-erro rect { fill: #7a1c18; }
+
+.sombra-corpo { opacity: 0.55; }
+.sombra-corpo.valida { fill: #1a1a1a; }
+.sombra-corpo.invalida { fill: #7a1c18; }
+.sombra-nome { fill: #fff; font-size: 6px; font-family: monospace; text-anchor: middle; }
+
+.sombra-furo { stroke-width: 1.5; }
+.sombra-furo.livre { stroke: #34c759; fill: rgba(52, 199, 89, 0.35); }
+.sombra-furo.ocupado { stroke: #ff3b30; fill: rgba(255, 59, 48, 0.45); }
+
+.etiqueta-erro rect { fill: #7a1c18; }

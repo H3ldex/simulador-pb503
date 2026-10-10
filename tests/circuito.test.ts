@@ -152,4 +152,37 @@ describe("Circuito — erros de montagem do enunciado", () => {
             expect(() => circuito.removerChip(3)).toThrow();
         });
     });
+
+    describe("Circuito — avaliar a montagem de um chip", () => {
+        it("numa posição livre, a montagem é válida e os 14 furos estão livres", () => {
+            const avaliacao = new Circuito().avaliarMontagem(1, 10);
+            expect(avaliacao.valida).toBe(true);
+            expect(avaliacao.furos.length).toBe(14);
+            expect(avaliacao.furos.every((f) => f.livre)).toBe(true);
+        });
+    
+        it("por cima de outro chip, é inválida e marca os furos ocupados", () => {
+            const circuito = new Circuito();
+            circuito.montarChip(criar74LS08(), 1, 10);
+    
+            const avaliacao = circuito.avaliarMontagem(1, 12);
+    
+            expect(avaliacao.valida).toBe(false);
+            expect(avaliacao.motivo).toContain("ocupados");
+            expect(avaliacao.furos.filter((f) => !f.livre).length).toBe(10);   // colunas 12 a 16, em cima e em baixo
+        });
+    
+        it("a sair da breadboard, é inválida e só devolve os furos que existem", () => {
+            const avaliacao = new Circuito().avaliarMontagem(1, 60);
+            expect(avaliacao.valida).toBe(false);
+            expect(avaliacao.motivo).toContain("não cabe");
+            expect(avaliacao.furos.length).toBe(10);   // colunas 60 a 64, em cima e em baixo
+        });
+    
+        it("avaliar não monta nada", () => {
+            const circuito = new Circuito();
+            circuito.avaliarMontagem(1, 10);
+            expect(circuito.listarChips()).toEqual([]);
+        });
+    });
 });
