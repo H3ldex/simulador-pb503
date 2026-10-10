@@ -57,7 +57,11 @@ const FILAS: FilaAlimentacao[] = ["+5V", "+V", "-V", "0V"];
 const INTERRUPTORES: NumeroInterruptor[] = [1, 2, 3, 4, 5, 6, 7, 8];
 
 export class Circuito {
-    readonly base = new BaseMontagem();
+    private montagem = new BaseMontagem();
+
+    get base(): BaseMontagem {
+        return this.montagem;
+    }
     readonly fonte = new FonteAlimentacao();
     readonly interruptores = new InterruptoresLogicos(this.fonte);
     readonly indicadores = new IndicadoresLogicos(this.fonte);
@@ -97,6 +101,35 @@ export class Circuito {
             placa: montado.placa,
             colunaPino1: montado.colunaPino1,
         }));
+    }
+
+    removerFio(indice: number): void {
+        if (indice < 0 || indice >= this.fios.length) {
+            throw new Error(`Não existe o fio número ${indice}.`);
+        }
+        this.fios.splice(indice, 1);
+        this.reconstruirLigacoes();
+    }
+
+    removerChip(indice: number): void {
+        const montado = this.chips[indice];
+        if (montado === undefined) {
+            throw new Error(`Não existe o chip número ${indice}.`);
+        }
+        for (const furo of montado.furos.values()) {
+            this.furosOcupados.delete(furo);
+        }
+        this.chips.splice(indice, 1);
+    }
+
+    // O union-find não sabe desfazer ligações: recomeça com uma base nova
+    // e volta a ligar os fios que restam
+    private reconstruirLigacoes(): void {
+        this.montagem = new BaseMontagem();
+        for (const fio of this.fios) {
+            this.montagem.ligarFio(fio.de, fio.para);
+        }
+        this.valores = new Map();
     }
 
     // --- Simulação ---

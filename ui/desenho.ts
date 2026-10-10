@@ -23,6 +23,9 @@ const INTERRUPTORES: NumeroInterruptor[] = [1, 2, 3, 4, 5, 6, 7, 8];
 export interface AcoesDaPlaca {
     aoClicarPower(): void;
     aoClicarInterruptor(numero: NumeroInterruptor): void;
+    aoClicarFuro(furo: string): void;
+    aoClicarFio(indice: number): void;
+    aoClicarChip(indice: number): void;
 }
 
 // Cria um elemento SVG com os atributos indicados e, opcionalmente, um texto
@@ -37,15 +40,15 @@ function criar(tag: string, atributos: Record<string, string | number>, texto?: 
     return elemento;
 }
 
-export function desenharPlaca(circuito: Circuito, acoes: AcoesDaPlaca): SVGElement {
+export function desenharPlaca(circuito: Circuito, acoes: AcoesDaPlaca, furoSelecionado?: string): SVGElement {
     const svg = criar("svg", { viewBox: `0 0 ${LARGURA} ${ALTURA}`, class: "placa" });
     svg.append(criar("rect", { x: 0, y: 0, width: LARGURA, height: ALTURA, rx: 12, class: "fundo" }));
 
     desenharPower(svg, circuito, acoes);
     desenharAreas(svg);
-    desenharFuros(svg, circuito);
-    desenharChips(svg, circuito);
-    desenharFios(svg, circuito);
+    desenharFuros(svg, circuito, acoes, furoSelecionado);
+    desenharChips(svg, circuito, acoes);
+    desenharFios(svg, circuito, acoes);
     desenharLeds(svg, circuito);
     desenharInterruptores(svg, circuito, acoes);
 
@@ -77,10 +80,13 @@ function desenharAreas(svg: SVGElement): void {
     }
 }
 
-function desenharFuros(svg: SVGElement, circuito: Circuito): void {
+function desenharFuros(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca, furoSelecionado?: string): void {
     for (const furo of circuito.base.listarFuros()) {
         const p = posicaoDoFuro(furo);
-        svg.append(criar("rect", { x: p.x - 2, y: p.y - 2, width: 4, height: 4, class: "furo" }));
+        const classe = furo === furoSelecionado ? "furo selecionado" : "furo";
+        const quadrado = criar("rect", { x: p.x - 3, y: p.y - 3, width: 6, height: 6, class: classe });
+        quadrado.addEventListener("click", () => acoes.aoClicarFuro(furo));
+        svg.append(quadrado);
     }
 }
 
@@ -110,10 +116,11 @@ function desenharInterruptores(svg: SVGElement, circuito: Circuito, acoes: Acoes
     }
 }
 
-function desenharChips(svg: SVGElement, circuito: Circuito): void {
-    for (const chip of circuito.listarChips()) {
+function desenharChips(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca): void {
+    circuito.listarChips().forEach((chip, indice) => {
         const r = retanguloDoChip(chip.placa, chip.colunaPino1);
         const grupo = criar("g", { class: "chip" });
+        grupo.addEventListener("click", () => acoes.aoClicarChip(indice));
         grupo.append(criar("title", {}, `${chip.nome}: pino 1 na breadboard ${chip.placa}, coluna ${chip.colunaPino1}`));
 
         // Pernas: do furo de cada pino até ao corpo
@@ -123,11 +130,13 @@ function desenharChips(svg: SVGElement, circuito: Circuito): void {
             grupo.append(criar("line", { x1: p.x, y1: p.y, x2: p.x, y2: yDoCorpo, class: "chip-perna" }));
         }
 
+        // Corpo, marca do lado esquerdo e nome
         grupo.append(criar("rect", { x: r.x, y: r.y, width: r.largura, height: r.altura, rx: 1.5, class: "chip-corpo" }));
         grupo.append(criar("circle", { cx: r.x, cy: r.y + r.altura / 2, r: 3, class: "chip-marca" }));
         grupo.append(criar("text", { x: r.x + r.largura / 2, y: r.y + r.altura / 2 + 2, class: "chip-nome" }, chip.nome));
+
         svg.append(grupo);
-    }
+    });
 }
 
 // Cores dos fios de sinal; os de alimentação têm cores fixas, como no laboratório
@@ -144,7 +153,7 @@ function corDoFio(fio: Fio, indice: number): string {
     return CORES_DOS_FIOS[indice % CORES_DOS_FIOS.length] ?? "#1e88e5";
 }
 
-function desenharFios(svg: SVGElement, circuito: Circuito): void {
+function desenharFios(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca): void {
     circuito.listarFios().forEach((fio, indice) => {
         const a = posicaoDoFuro(fio.de);
         const b = posicaoDoFuro(fio.para);
@@ -156,8 +165,10 @@ function desenharFios(svg: SVGElement, circuito: Circuito): void {
             y: (a.y + b.y) / 2 - Math.min(distancia * 0.25, 60),
         };
         const cor = corDoFio(fio, indice);
+        
 
         const grupo = criar("g", { class: "fio" });
+        grupo.addEventListener("click", () => acoes.aoClicarFio(indice));
         grupo.append(criar("title", {}, `${fio.de} ↔ ${fio.para}`));
         grupo.append(criar("path", {
             d: `M ${a.x} ${a.y} Q ${controlo.x} ${controlo.y} ${b.x} ${b.y}`,

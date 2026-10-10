@@ -47,3 +47,26 @@ h1 {
 
 .fio-linha { fill: none; stroke-width: 2.2; stroke-linecap: round; opacity: 0.9; }
 .fio:hover .fio-linha { stroke-width: 3.5; opacity: 1; }
+
+.ferramentas { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.ferramentas button {
+    background: #22262e;
+    color: #e8e8e8;
+    border: 1px solid #3a3f4a;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.ferramentas button:hover { border-color: #5b8fd6; }
+.ferramentas button.ativo { background: #3b6fb6; border-color: #5b8fd6; }
+
+.mensagem { margin: 4px 0; font-size: 0.9rem; color: #c8ccd4; }
+.aviso { margin: 4px 0; font-size: 0.9rem; color: #ffb74d; }
+
+.furo { cursor: crosshair; }
+.furo:hover { fill: #3b6fb6; }
+.furo.selecionado { fill: #ff9800; }
+
+.chip, .fio { cursor: pointer; }
+.chip-perna, .fio circle { pointer-events: none; }

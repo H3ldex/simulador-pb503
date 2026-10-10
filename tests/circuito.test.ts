@@ -110,4 +110,46 @@ describe("Circuito — erros de montagem do enunciado", () => {
             expect(montarLab1().listarChips()).toEqual([{ nome: "74LS08", placa: 1, colunaPino1: 10 }]);
         });
     });
+
+    describe("Circuito — remover fios e chips", () => {
+        it("remover um fio desfaz só essa ligação", () => {
+            const circuito = new Circuito();
+            circuito.ligarFio("P1:A:1", "P1:A:5");
+            circuito.ligarFio("P1:A:5", "P1:A:9");
+    
+            circuito.removerFio(0);
+    
+            expect(circuito.base.estaoLigados("P1:A:1", "P1:A:5")).toBe(false);
+            expect(circuito.base.estaoLigados("P1:A:5", "P1:A:9")).toBe(true);
+            expect(circuito.listarFios()).toEqual([{ de: "P1:A:5", para: "P1:A:9" }]);
+        });
+    
+        it("no Lab 1, remover o fio do LED deixa-o apagado", () => {
+            const circuito = montarLab1();
+            circuito.interruptores.colocar(1, true);
+            circuito.interruptores.colocar(2, true);
+            circuito.interruptores.colocar(3, true);
+    
+            circuito.removerFio(6);   // o 7.º fio do Lab 1: pino 8 → LED 1
+            circuito.simular();
+    
+            expect(circuito.estadoDoLed(1)).toBe("apagado");
+        });
+    
+        it("remover um chip liberta os seus furos", () => {
+            const circuito = new Circuito();
+            circuito.montarChip(criar74LS08(), 1, 10);
+    
+            circuito.removerChip(0);
+    
+            expect(circuito.listarChips()).toEqual([]);
+            expect(() => circuito.montarChip(criar74LS04(), 1, 12)).not.toThrow();
+        });
+    
+        it("rejeita índices que não existem", () => {
+            const circuito = new Circuito();
+            expect(() => circuito.removerFio(0)).toThrow();
+            expect(() => circuito.removerChip(3)).toThrow();
+        });
+    });
 });
