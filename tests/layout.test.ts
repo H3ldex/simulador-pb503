@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { BaseMontagem } from "../src/BaseMontagem";
-import { ALTURA, LARGURA, PASSO, posicaoDoFuro } from "../ui/layout";
+import { ALTURA, LARGURA, PASSO, posicaoDoFuro, retanguloDoChip } from "../ui/layout";
 
 describe("layout", () => {
     it("todos os furos da base têm posição, e nenhuma se repete", () => {
@@ -47,5 +47,17 @@ describe("layout", () => {
         expect(() => posicaoDoFuro("XPTO")).toThrow();
         expect(() => posicaoDoFuro("P1:Z:3")).toThrow();
         expect(() => posicaoDoFuro("ALIM:+12V:1")).toThrow();
+    });
+
+    it("o corpo de um chip fica entre as linhas E e F e cobre os 7 pinos de cada lado", () => {
+        const corpo = retanguloDoChip(1, 10);
+        const pino1 = posicaoDoFuro("P1:F:10");
+        const pino7 = posicaoDoFuro("P1:F:16");
+        const pino14 = posicaoDoFuro("P1:E:10");
+
+        expect(corpo.x).toBeLessThan(pino1.x);
+        expect(corpo.x + corpo.largura).toBeGreaterThan(pino7.x);
+        expect(corpo.y).toBeGreaterThan(pino14.y);
+        expect(corpo.y + corpo.altura).toBeLessThan(pino1.y);
     });
 });

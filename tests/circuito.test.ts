@@ -98,4 +98,16 @@ describe("Circuito — erros de montagem do enunciado", () => {
         circuito.montarChip(criar74LS08(), 1, 10);
         expect(() => circuito.montarChip(criar74LS04(), 1, 12)).toThrow("já está ocupado");
     });
+
+    describe("Circuito — informação para a interface", () => {
+        it("guarda os fios pela ordem em que foram ligados", () => {
+            const fios = montarLab1().listarFios();
+            expect(fios.length).toBe(7);
+            expect(fios[0]).toEqual({ de: "P1:E:10", para: "ALIM:+5V:1" });
+        });
+    
+        it("lista os chips montados com a sua posição", () => {
+            expect(montarLab1().listarChips()).toEqual([{ nome: "74LS08", placa: 1, colunaPino1: 10 }]);
+        });
+    });
 });

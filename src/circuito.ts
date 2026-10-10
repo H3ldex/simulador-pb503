@@ -25,6 +25,19 @@ export interface ResultadoSimulacao {
     curtos: Curto[];
 }
 
+// Um fio entre dois furos
+export interface Fio {
+    de: string;
+    para: string;
+}
+
+// O que a interface precisa de saber sobre um chip montado
+export interface InfoChip {
+    nome: string;
+    placa: number;
+    colunaPino1: number;
+}
+
 // Um condutor a tentar forçar um valor num nó
 interface Contribuicao {
     no: string;
@@ -34,6 +47,8 @@ interface Contribuicao {
 
 interface ChipMontado {
     chip: ChipLogico;
+    placa: number;
+    colunaPino1: number;
     furos: Map<NumeroPino, string>;
 }
 
@@ -50,6 +65,7 @@ export class Circuito {
     private readonly chips: ChipMontado[] = [];
     private readonly furosOcupados = new Set<string>();
     private valores = new Map<string, ValorLogico>();
+    private readonly fios: Fio[] = [];
 
     // --- Montagem ---
 
@@ -63,11 +79,24 @@ export class Circuito {
         for (const furo of furos.values()) {
             this.furosOcupados.add(furo);
         }
-        this.chips.push({ chip, furos });
+        this.chips.push({ chip, placa, colunaPino1, furos });
     }
 
     ligarFio(furoA: string, furoB: string): void {
         this.base.ligarFio(furoA, furoB);
+        this.fios.push({ de: furoA, para: furoB });
+    }
+
+    listarFios(): Fio[] {
+        return [...this.fios];
+    }
+
+    listarChips(): InfoChip[] {
+        return this.chips.map((montado) => ({
+            nome: montado.chip.nome,
+            placa: montado.placa,
+            colunaPino1: montado.colunaPino1,
+        }));
     }
 
     // --- Simulação ---
@@ -90,6 +119,7 @@ export class Circuito {
         this.valores = valores;
         return { estabilizou: false, iteracoes: MAXIMO_DE_ITERACOES, curtos };
     }
+
 
     // --- Leitura dos resultados (depois de simular) ---
 

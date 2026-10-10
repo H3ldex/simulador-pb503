@@ -8,9 +8,13 @@ import {
     posicaoDoInterruptor,
     posicaoDoLed,
     retanguloDaBarra,
+    retanguloDoChip,
     retanguloDaBreadboard,
     retanguloDoPower,
 } from "./layout";
+import type { Fio } from "../src/circuito";
+import { furoDoPino } from "../src/montagem";
+import { TODOS_OS_PINOS } from "../src/pinos";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const INTERRUPTORES: NumeroInterruptor[] = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -40,6 +44,8 @@ export function desenharPlaca(circuito: Circuito, acoes: AcoesDaPlaca): SVGEleme
     desenharPower(svg, circuito, acoes);
     desenharAreas(svg);
     desenharFuros(svg, circuito);
+    desenharChips(svg, circuito);
+    desenharFios(svg, circuito);
     desenharLeds(svg, circuito);
     desenharInterruptores(svg, circuito, acoes);
 
@@ -102,4 +108,65 @@ function desenharInterruptores(svg: SVGElement, circuito: Circuito, acoes: Acoes
         grupo.addEventListener("click", () => acoes.aoClicarInterruptor(numero));
         svg.append(grupo);
     }
+}
+
+function desenharChips(svg: SVGElement, circuito: Circuito): void {
+    for (const chip of circuito.listarChips()) {
+        const r = retanguloDoChip(chip.placa, chip.colunaPino1);
+        const grupo = criar("g", { class: "chip" });
+        grupo.append(criar("title", {}, `${chip.nome}: pino 1 na breadboard ${chip.placa}, coluna ${chip.colunaPino1}`));
+
+        // Pernas: do furo de cada pino até ao corpo
+        for (const pino of TODOS_OS_PINOS) {
+            const p = posicaoDoFuro(furoDoPino(chip.placa, chip.colunaPino1, pino));
+            const yDoCorpo = pino <= 7 ? r.y + r.altura : r.y;
+            grupo.append(criar("line", { x1: p.x, y1: p.y, x2: p.x, y2: yDoCorpo, class: "chip-perna" }));
+        }
+
+        grupo.append(criar("rect", { x: r.x, y: r.y, width: r.largura, height: r.altura, rx: 1.5, class: "chip-corpo" }));
+        grupo.append(criar("circle", { cx: r.x, cy: r.y + r.altura / 2, r: 3, class: "chip-marca" }));
+        grupo.append(criar("text", { x: r.x + r.largura / 2, y: r.y + r.altura / 2 + 2, class: "chip-nome" }, chip.nome));
+        svg.append(grupo);
+    }
+}
+
+// Cores dos fios de sinal; os de alimentação têm cores fixas, como no laboratório
+const CORES_DOS_FIOS = ["#1e88e5", "#43a047", "#fb8c00", "#8e24aa", "#00acc1", "#fdd835", "#6d4c41"];
+
+function corDoFio(fio: Fio, indice: number): string {
+    const pontas = [fio.de, fio.para];
+    if (pontas.some((furo) => furo.startsWith("ALIM:+5V"))) {
+        return "#d32f2f";   // vermelho: +5 V
+    }
+    if (pontas.some((furo) => furo.startsWith("ALIM:0V"))) {
+        return "#212121";   // preto: massa
+    }
+    return CORES_DOS_FIOS[indice % CORES_DOS_FIOS.length] ?? "#1e88e5";
+}
+
+function desenharFios(svg: SVGElement, circuito: Circuito): void {
+    circuito.listarFios().forEach((fio, indice) => {
+        const a = posicaoDoFuro(fio.de);
+        const b = posicaoDoFuro(fio.para);
+
+        // Curva suave: o ponto de controlo fica acima do meio do fio
+        const distancia = Math.hypot(b.x - a.x, b.y - a.y);
+        const controlo = {
+            x: (a.x + b.x) / 2,
+            y: (a.y + b.y) / 2 - Math.min(distancia * 0.25, 60),
+        };
+        const cor = corDoFio(fio, indice);
+
+        const grupo = criar("g", { class: "fio" });
+        grupo.append(criar("title", {}, `${fio.de} ↔ ${fio.para}`));
+        grupo.append(criar("path", {
+            d: `M ${a.x} ${a.y} Q ${controlo.x} ${controlo.y} ${b.x} ${b.y}`,
+            stroke: cor,
+            class: "fio-linha",
+        }));
+        for (const ponta of [a, b]) {
+            grupo.append(criar("circle", { cx: ponta.x, cy: ponta.y, r: 2.2, fill: cor }));
+        }
+        svg.append(grupo);
+    });
 }

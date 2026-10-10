@@ -39,3 +39,11 @@ h1 {
 .power rect { fill: #5a1a1a; stroke: #888; }
 .power.ligado rect { fill: #e53935; }
 .power text { fill: #fff; font-size: 10px; font-weight: bold; text-anchor: middle; }
+
+.chip-corpo { fill: #1a1a1a; stroke: #000; }
+.chip-perna { stroke: #b0b0b0; stroke-width: 2; }
+.chip-marca { fill: #f1ead9; }
+.chip-nome { fill: #e0e0e0; font-size: 6px; font-family: monospace; text-anchor: middle; }
+
+.fio-linha { fill: none; stroke-width: 2.2; stroke-linecap: round; opacity: 0.9; }
+.fio:hover .fio-linha { stroke-width: 3.5; opacity: 1; }
