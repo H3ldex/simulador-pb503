@@ -268,7 +268,7 @@ function criarSeccao(titulo: string, botoes: HTMLElement[]): HTMLElement {
 function desenharLateral(): void {
     const cabecalho = document.createElement("header");
     cabecalho.className = "cabecalho";
-    cabecalho.innerHTML = `<h1>Simulador PB-503</h1><p>Versão beta</p>`;
+    cabecalho.innerHTML = `<a class="voltar" href="index.html">← Início</a><h1>Simulador PB-503</h1><p>Versão beta</p>`;
 
     lateral.replaceChildren(
         cabecalho,

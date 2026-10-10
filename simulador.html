@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Simulador PB-503</title>
+    <link rel="stylesheet" href="/ui/estilos.css" />
+    <link rel="stylesheet" href="/ui/tema.css" />
+  </head>
+  <body>
+    <div class="aplicacao">
+      <aside class="lateral" id="lateral"></aside>
+      <main class="principal">
+        <div class="zona-indicacao" id="indicacao"></div>
+        <div class="zona-placa">
+            <div class="placa-contentor" id="placa"></div>
+            <div class="controlos-zoom" id="zoom"></div>
+            <div class="dica" id="dica" hidden></div>
+          </div>
+      </main>
+    </div>
+    <script type="module" src="/ui/main.ts"></script>
+  </body>
+</html>

@@ -252,3 +252,12 @@ body {
 }
 .dica[hidden] { display: none; }
 .dica strong { font-size: 0.88rem; margin-bottom: 2px; }
+
+.voltar {
+    display: inline-block;
+    margin-bottom: 10px;
+    color: var(--texto-suave);
+    font-size: 0.75rem;
+    text-decoration: none;
+}
+.voltar:hover { color: var(--texto); }

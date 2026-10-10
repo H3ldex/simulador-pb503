@@ -1,0 +1,40 @@
+/* Cores e base comuns a todas as páginas */
+:root {
+    color-scheme: dark;
+
+    --fundo: #0f1115;
+    --painel: #161a20;
+    --painel-claro: #1f242c;
+    --borda: #2a2f38;
+    --texto: #e8e8e8;
+    --texto-suave: #9aa3b2;
+    --azul: #3b6fb6;
+    --verde: #34c759;
+    --vermelho: #ff5a52;
+    --laranja: #ffb74d;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: system-ui, sans-serif;
+}
+
+/* Barras de deslocamento finas e escuras, em todas as páginas */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--borda) transparent;
+}
+
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+    background: var(--borda);
+    border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover { background: #3a4150; }
