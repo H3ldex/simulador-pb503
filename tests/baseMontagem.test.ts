@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { BaseMontagem } from "../src/baseMontagem";
+import { BaseMontagem, furoDoInterruptor, furoDoLed } from "../src/BaseMontagem";
 
 describe("BaseMontagem — barra de alimentação", () => {
     it("cada fila está ligada de ponta a ponta", () => {
@@ -74,9 +74,9 @@ describe("BaseMontagem — fios", () => {
 });
 
 describe("BaseMontagem — tamanho e furos inválidos", () => {
-    it("tem 2520 furos nas breadboards e 200 na barra de alimentação", () => {
+    it("tem 2520 furos nas breadboards, 200 na barra de alimentação e 32 nos terminais", () => {
         const base = new BaseMontagem();
-        expect(base.contarFuros()).toBe(2520 + 200);
+        expect(base.contarFuros()).toBe(2520 + 200 + 16 + 16);
     });
 
     it("rejeita furos que não existem", () => {
@@ -91,4 +91,38 @@ describe("BaseMontagem — tamanho e furos inválidos", () => {
         const base = new BaseMontagem();
         expect(() => base.ligarFio("P1:A:1", "P1:K:1")).toThrow('O furo "P1:K:1" não existe');
     });
+
+
+
+    describe("BaseMontagem — terminais dos interruptores e dos LEDs", () => {
+        it("os 2 furos de cada interruptor estão ligados", () => {
+            const base = new BaseMontagem();
+            expect(base.estaoLigados(furoDoInterruptor(1, 1), furoDoInterruptor(1, 2))).toBe(true);
+            expect(base.estaoLigados(furoDoInterruptor(8, 1), furoDoInterruptor(8, 2))).toBe(true);
+        });
+    
+        it("interruptores diferentes estão separados", () => {
+            const base = new BaseMontagem();
+            expect(base.estaoLigados(furoDoInterruptor(1), furoDoInterruptor(2))).toBe(false);
+        });
+    
+        it("os 2 furos de cada LED estão ligados", () => {
+            const base = new BaseMontagem();
+            expect(base.estaoLigados(furoDoLed(3, 1), furoDoLed(3, 2))).toBe(true);
+        });
+    
+        it("LEDs diferentes estão separados", () => {
+            const base = new BaseMontagem();
+            expect(base.estaoLigados(furoDoLed(1), furoDoLed(2))).toBe(false);
+        });
+    
+        it("um fio liga um interruptor a uma coluna da breadboard (como no Lab 1)", () => {
+            const base = new BaseMontagem();
+            base.ligarFio(furoDoInterruptor(1), "P1:J:10");
+            expect(base.estaoLigados(furoDoInterruptor(1, 2), "P1:F:10")).toBe(true);
+            expect(base.estaoLigados(furoDoInterruptor(1), furoDoLed(1))).toBe(false);
+        });
+    });
+
+
 });

@@ -17,6 +17,20 @@ const LINHAS_INFERIORES = ["F", "G", "H", "I", "J"];
 // cada uma dividida em duas metades independentes
 const FILAS_BARRAMENTO = ["S1", "S2", "I1", "I2"];
 
+// NOVO: blocos de terminais dos interruptores S1–S8 e dos LEDs 1–8
+export const NUMERO_DE_INTERRUPTORES = 8;
+export const NUMERO_DE_LEDS = 8;
+export const FUROS_POR_TERMINAL = 2;
+
+// NOVO: nomes dos furos dos terminais
+export function furoDoInterruptor(numero: number, furo = 1): string {
+    return `INT:${numero}:${furo}`;
+}
+
+export function furoDoLed(numero: number, furo = 1): string {
+    return `LED:${numero}:${furo}`;
+}
+
 // Números de inicio a fim, inclusive: intervalo(1, 3) → [1, 2, 3]
 function intervalo(inicio: number, fim: number): number[] {
     const numeros: number[] = [];
@@ -35,6 +49,8 @@ export class BaseMontagem {
         for (let placa = 1; placa <= NUMERO_DE_BREADBOARDS; placa++) {
             this.criarBreadboard(placa);
         }
+        this.criarTerminais(NUMERO_DE_INTERRUPTORES, furoDoInterruptor);   // NOVO
+        this.criarTerminais(NUMERO_DE_LEDS, furoDoLed);                    // NOVO
     }
 
     existeFuro(furo: string): boolean {
@@ -90,6 +106,13 @@ export class BaseMontagem {
             this.adicionarGrupoLigado(
                 intervalo(metade + 1, FUROS_POR_FILA_DE_BARRAMENTO).map((n) => `${prefixo}:${fila}:${n}`)
             );
+        }
+    }
+
+    // NOVO: cada número de um bloco de terminais é um grupo de furos ligados
+    private criarTerminais(quantidade: number, nomeDoFuro: (numero: number, furo: number) => string): void {
+        for (let numero = 1; numero <= quantidade; numero++) {
+            this.adicionarGrupoLigado(intervalo(1, FUROS_POR_TERMINAL).map((furo) => nomeDoFuro(numero, furo)));
         }
     }
 

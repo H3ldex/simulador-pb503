@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { furoDoPino, furosDoChip } from "../src/montagem";
-import { BaseMontagem } from "../src/baseMontagem";
+import { BaseMontagem } from "../src/BaseMontagem";
 import type { NumeroPino } from "../src/pinos";
 
 describe("furoDoPino", () => {

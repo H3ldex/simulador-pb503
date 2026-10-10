@@ -1,4 +1,4 @@
-import { COLUNAS_POR_BREADBOARD, NUMERO_DE_BREADBOARDS } from "./baseMontagem";
+import { COLUNAS_POR_BREADBOARD, NUMERO_DE_BREADBOARDS } from "./BaseMontagem";
 import { TODOS_OS_PINOS, type NumeroPino } from "./pinos";
 
 const PINOS_POR_LADO = 7;
