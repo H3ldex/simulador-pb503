@@ -4,8 +4,11 @@ import {
     criar74LS00, criar74LS02, criar74LS04, criar74LS08, criar74LS32, criar74LS86,
 } from "../src/chips/catalogo74LS";
 import { desenharPlaca, type AcoesDaPlaca } from "./desenho";
+import { ICONES, type NomeIcone } from "./icons";
+import type { Ponto } from "./layout";
+import { ampliar, deslocar, nivelDeZoom, vistaAjustada, type Vista } from "./vista";
 
-// --- Ferramentas ---
+// --- Tipos ---
 
 type Modo =
     | { tipo: "usar" }
@@ -13,18 +16,38 @@ type Modo =
     | { tipo: "chip"; nome: string; criar: () => ChipLogico }
     | { tipo: "apagar" };
 
-const CATALOGO: { nome: string; descricao: string; criar: () => ChipLogico }[] = [
-    { nome: "74LS00", descricao: "NAND", criar: criar74LS00 },
-    { nome: "74LS02", descricao: "NOR",  criar: criar74LS02 },
-    { nome: "74LS04", descricao: "NOT",  criar: criar74LS04 },
-    { nome: "74LS08", descricao: "AND",  criar: criar74LS08 },
-    { nome: "74LS32", descricao: "OR",   criar: criar74LS32 },
-    { nome: "74LS86", descricao: "XOR",  criar: criar74LS86 },
+type TipoIndicacao = "info" | "sucesso" | "erro" | "aviso";
+
+interface Indicacao {
+    tipo: TipoIndicacao;
+    texto: string;
+}
+
+// --- Catálogo, exemplos e constantes ---
+
+const CATALOGO: { nome: string; porta: string; detalhe: string; icone: NomeIcone; criar: () => ChipLogico }[] = [
+    { nome: "74LS00", porta: "NAND", detalhe: "4 portas de 2 entradas", icone: "nand", criar: criar74LS00 },
+    { nome: "74LS02", porta: "NOR",  detalhe: "4 portas de 2 entradas", icone: "nor",  criar: criar74LS02 },
+    { nome: "74LS04", porta: "NOT",  detalhe: "6 inversores",           icone: "not",  criar: criar74LS04 },
+    { nome: "74LS08", porta: "AND",  detalhe: "4 portas de 2 entradas", icone: "and",  criar: criar74LS08 },
+    { nome: "74LS32", porta: "OR",   detalhe: "4 portas de 2 entradas", icone: "or",   criar: criar74LS32 },
+    { nome: "74LS86", porta: "XOR",  detalhe: "4 portas de 2 entradas", icone: "xor",  criar: criar74LS86 },
 ];
+
+const EXEMPLOS: { nome: string; detalhe: string; carregar: () => Circuito }[] = [
+    { nome: "Lab 1", detalhe: "F = A2 · A0 · A1 com um 74LS08", carregar: montarLab1 },
+];
+
+const ICONE_DA_INDICACAO: Record<TipoIndicacao, NomeIcone> = {
+    info: "info",
+    sucesso: "certo",
+    erro: "erro",
+    aviso: "aviso",
+};
 
 const LINHAS_PRINCIPAIS = new Set(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]);
 
-// --- Estado da aplicação ---
+// --- Elementos da página e estado ---
 
 function obterElemento(seletor: string): HTMLElement {
     const elemento = document.querySelector<HTMLElement>(seletor);
@@ -34,10 +57,22 @@ function obterElemento(seletor: string): HTMLElement {
     return elemento;
 }
 
-const app = obterElemento("#app");
+const lateral = obterElemento("#lateral");
+const zonaIndicacao = obterElemento("#indicacao");
+const zonaPlaca = obterElemento("#placa");
+const zonaZoom = obterElemento("#zoom");
+
 let circuito = new Circuito();
 let modo: Modo = { tipo: "usar" };
-let mensagem = "Placa vazia. Escolhe uma ferramenta para começar.";
+let indicacao: Indicacao = {
+    tipo: "info",
+    texto: "Placa vazia. Escolhe um circuito integrado ou um exemplo na barra lateral para começar.",
+};
+let ajustada: Vista = vistaAjustada(proporcaoDaZona());
+let vista: Vista = ajustada;
+let espacoPremido = false;
+let arrasto: { x: number; y: number } | undefined;
+let houveArrasto = false;
 
 // --- Funções auxiliares ---
 
@@ -45,9 +80,9 @@ function mensagemDeErro(erro: unknown): string {
     return erro instanceof Error ? erro.message : String(erro);
 }
 
-function mudarModo(novoModo: Modo, novaMensagem: string): void {
+function mudarModo(novoModo: Modo, texto: string): void {
     modo = novoModo;
-    mensagem = novaMensagem;
+    indicacao = { tipo: "info", texto };
     atualizar();
 }
 
@@ -60,7 +95,7 @@ function posicaoParaChip(furo: string): { placa: number; coluna: number } {
     return { placa: Number(peca.slice(1)), coluna: Number(textoNumero) };
 }
 
-// --- O que acontece em cada clique ---
+// --- O que acontece em cada clique na placa ---
 
 function aoClicarFuro(furo: string): void {
     try {
@@ -68,26 +103,25 @@ function aoClicarFuro(furo: string): void {
             const inicio = modo.inicio;
             if (inicio === undefined) {
                 modo = { tipo: "fio", inicio: furo };
-                mensagem = `Fio a partir de ${furo}: clica no furo de destino (Esc cancela).`;
+                indicacao = { tipo: "info", texto: `Fio a partir de ${furo}. Clica no furo de destino (Esc cancela).` };
             } else if (inicio === furo) {
                 modo = { tipo: "fio", inicio: undefined };
-                mensagem = "Fio cancelado.";
+                indicacao = { tipo: "info", texto: "Fio cancelado." };
             } else {
                 circuito.ligarFio(inicio, furo);
                 modo = { tipo: "fio", inicio: undefined };
-                mensagem = `Fio ligado: ${inicio} ↔ ${furo}. Clica noutro furo para o próximo fio.`;
+                indicacao = { tipo: "sucesso", texto: `Fio ligado entre ${inicio} e ${furo}. Clica noutro furo para o próximo fio.` };
             }
         } else if (modo.tipo === "chip") {
             const { placa, coluna } = posicaoParaChip(furo);
             circuito.montarChip(modo.criar(), placa, coluna);
-            mensagem = `${modo.nome} montado na breadboard ${placa}, com o pino 1 na coluna ${coluna}.`;
+            indicacao = { tipo: "sucesso", texto: `${modo.nome} montado na breadboard ${placa}, com o pino 1 na coluna ${coluna}.` };
         } else {
-            // Ponta de prova
             const valor = circuito.valorNoFuro(furo);
-            mensagem = `Ponta de prova em ${furo}: ${valor === "Z" ? "solto (Z)" : valor}.`;
+            indicacao = { tipo: "info", texto: `Ponta de prova em ${furo}: ${valor === "Z" ? "solto (sem valor)" : `valor ${valor}`}.` };
         }
     } catch (erro) {
-        mensagem = `⚠ ${mensagemDeErro(erro)}`;
+        indicacao = { tipo: "erro", texto: mensagemDeErro(erro) };
     }
     atualizar();
 }
@@ -109,93 +143,298 @@ const acoes: AcoesDaPlaca = {
     aoClicarFio: (indice) => {
         if (modo.tipo === "apagar") {
             circuito.removerFio(indice);
-            mensagem = "Fio apagado.";
+            indicacao = { tipo: "sucesso", texto: "Fio apagado." };
             atualizar();
         }
     },
     aoClicarChip: (indice) => {
         if (modo.tipo === "apagar") {
             circuito.removerChip(indice);
-            mensagem = "Chip apagado.";
+            indicacao = { tipo: "sucesso", texto: "Chip apagado." };
             atualizar();
         }
     },
 };
 
-// --- Desenho da página ---
+// --- Barra lateral ---
 
-function criarBotao(texto: string, ativo: boolean, aoClicar: () => void): HTMLButtonElement {
+function criarBotao(opcoes: {
+    icone: NomeIcone;
+    titulo: string;
+    detalhe?: string;
+    ativo?: boolean;
+    aoClicar: () => void;
+}): HTMLButtonElement {
     const botao = document.createElement("button");
-    botao.textContent = texto;
-    if (ativo) {
-        botao.classList.add("ativo");
+    botao.className = opcoes.ativo === true ? "botao ativo" : "botao";
+    botao.innerHTML = ICONES[opcoes.icone];
+
+    const textos = document.createElement("span");
+    textos.className = "botao-textos";
+
+    const titulo = document.createElement("span");
+    titulo.className = "botao-titulo";
+    titulo.textContent = opcoes.titulo;
+    textos.append(titulo);
+
+    if (opcoes.detalhe !== undefined) {
+        const detalhe = document.createElement("span");
+        detalhe.className = "botao-detalhe";
+        detalhe.textContent = opcoes.detalhe;
+        textos.append(detalhe);
     }
-    botao.addEventListener("click", aoClicar);
+
+    botao.append(textos);
+    botao.addEventListener("click", opcoes.aoClicar);
     return botao;
 }
 
-function desenharFerramentas(): HTMLElement {
-    const barra = document.createElement("div");
-    barra.className = "ferramentas";
+function criarSeccao(titulo: string, botoes: HTMLElement[]): HTMLElement {
+    const seccao = document.createElement("section");
+    seccao.className = "seccao";
+    const cabecalho = document.createElement("h2");
+    cabecalho.textContent = titulo;
+    seccao.append(cabecalho, ...botoes);
+    return seccao;
+}
 
-    barra.append(
-        criarBotao("Usar / ponta de prova", modo.tipo === "usar", () =>
-            mudarModo({ tipo: "usar" }, "Clica nos interruptores, no POWER, ou num furo para ver o seu valor.")),
-        criarBotao("Ligar fio", modo.tipo === "fio", () =>
-            mudarModo({ tipo: "fio", inicio: undefined }, "Clica no primeiro furo do fio.")),
-        ...CATALOGO.map((item) =>
-            criarBotao(`${item.nome} (${item.descricao})`, modo.tipo === "chip" && modo.nome === item.nome, () =>
-                mudarModo(
-                    { tipo: "chip", nome: item.nome, criar: item.criar },
-                    `Clica na coluna onde queres o pino 1 do ${item.nome} (linhas A a J).`,
-                ))),
-        criarBotao("Apagar", modo.tipo === "apagar", () =>
-            mudarModo({ tipo: "apagar" }, "Clica num fio ou num chip para o apagar.")),
-        criarBotao("Limpar placa", false, () => {
-            circuito = new Circuito();
-            mudarModo({ tipo: "usar" }, "Placa limpa.");
-        }),
-        criarBotao("Exemplo: Lab 1", false, () => {
-            circuito = montarLab1();
-            mudarModo({ tipo: "usar" }, "Lab 1 carregado: experimenta os interruptores S1, S2 e S3.");
-        }),
+function desenharLateral(): void {
+    const cabecalho = document.createElement("header");
+    cabecalho.className = "cabecalho";
+    cabecalho.innerHTML = `<h1>Simulador PB-503</h1><p>Versão beta</p>`;
+
+    lateral.replaceChildren(
+        cabecalho,
+        criarSeccao("Ferramentas", [
+            criarBotao({
+                icone: "usar", titulo: "Usar", detalhe: "Interruptores e ponta de prova",
+                ativo: modo.tipo === "usar",
+                aoClicar: () => mudarModo({ tipo: "usar" }, "Clica nos interruptores, no POWER, ou num furo para ver o seu valor."),
+            }),
+            criarBotao({
+                icone: "fio", titulo: "Ligar fio", detalhe: "Clica em dois furos",
+                ativo: modo.tipo === "fio",
+                aoClicar: () => mudarModo({ tipo: "fio", inicio: undefined }, "Clica no primeiro furo do fio."),
+            }),
+            criarBotao({
+                icone: "apagar", titulo: "Apagar", detalhe: "Clica num fio ou num chip",
+                ativo: modo.tipo === "apagar",
+                aoClicar: () => mudarModo({ tipo: "apagar" }, "Clica num fio ou num chip para o apagar."),
+            }),
+            criarBotao({
+                icone: "limpar", titulo: "Limpar placa", detalhe: "Remove tudo",
+                aoClicar: () => {
+                    circuito = new Circuito();
+                    mudarModo({ tipo: "usar" }, "Placa limpa.");
+                },
+            }),
+        ]),
+        criarSeccao(
+            "Circuitos integrados",
+            CATALOGO.map((item) =>
+                criarBotao({
+                    icone: item.icone,
+                    titulo: `${item.nome} · ${item.porta}`,
+                    detalhe: item.detalhe,
+                    ativo: modo.tipo === "chip" && modo.nome === item.nome,
+                    aoClicar: () =>
+                        mudarModo(
+                            { tipo: "chip", nome: item.nome, criar: item.criar },
+                            `Clica na coluna onde queres o pino 1 do ${item.nome} (linhas A a J de uma breadboard).`,
+                        ),
+                }),
+            ),
+        ),
+        criarSeccao(
+            "Exemplos",
+            EXEMPLOS.map((exemplo) =>
+                criarBotao({
+                    icone: "exemplo",
+                    titulo: exemplo.nome,
+                    detalhe: exemplo.detalhe,
+                    aoClicar: () => {
+                        circuito = exemplo.carregar();
+                        mudarModo({ tipo: "usar" }, `${exemplo.nome} carregado. Experimenta os interruptores.`);
+                    },
+                }),
+            ),
+        ),
     );
-    return barra;
 }
 
-function criarParagrafo(classe: string, texto: string): HTMLParagraphElement {
-    const paragrafo = document.createElement("p");
-    paragrafo.className = classe;
+// --- Indicações ---
+
+function criarIndicacao(tipo: TipoIndicacao, texto: string): HTMLElement {
+    const caixa = document.createElement("div");
+    caixa.className = `indicacao indicacao-${tipo}`;
+    caixa.innerHTML = ICONES[ICONE_DA_INDICACAO[tipo]];
+    const paragrafo = document.createElement("span");
     paragrafo.textContent = texto;
-    return paragrafo;
+    caixa.append(paragrafo);
+    return caixa;
 }
+
+function desenharIndicacoes(avisos: string[]): void {
+    zonaIndicacao.replaceChildren(
+        criarIndicacao(indicacao.tipo, indicacao.texto),
+        ...avisos.map((aviso) => criarIndicacao("aviso", aviso)),
+    );
+}
+
+// --- Ciclo principal ---
 
 function atualizar(): void {
     const resultado = circuito.simular();
 
     const avisos: string[] = [];
     if (!resultado.estabilizou) {
-        avisos.push("⚠ O circuito não estabiliza: há uma ligação de uma saída de volta a uma entrada que oscila.");
+        avisos.push("O circuito não estabiliza: há uma saída ligada de volta a uma entrada que fica a oscilar.");
     }
     for (const curto of resultado.curtos) {
-        avisos.push(`⚠ Curto-circuito entre ${curto.condutores.join(" e ")}.`);
+        avisos.push(`Curto-circuito entre ${curto.condutores.join(" e ")}.`);
     }
 
     const furoSelecionado = modo.tipo === "fio" ? modo.inicio : undefined;
 
-    app.replaceChildren(
-        desenharFerramentas(),
-        criarParagrafo("mensagem", mensagem),
-        ...avisos.map((aviso) => criarParagrafo("aviso", aviso)),
-        desenharPlaca(circuito, acoes, furoSelecionado),
-    );
+    desenharLateral();
+    desenharIndicacoes(avisos);
+    zonaPlaca.replaceChildren(desenharPlaca(circuito, acoes, furoSelecionado));
 }
+aplicarVista();
 
 // Esc cancela um fio a meio
 document.addEventListener("keydown", (evento) => {
     if (evento.key === "Escape" && modo.tipo === "fio" && modo.inicio !== undefined) {
         mudarModo({ tipo: "fio", inicio: undefined }, "Fio cancelado.");
     }
+});
+
+// --- Zoom e deslocamento ---
+
+function proporcaoDaZona(): number {
+    const caixa = zonaPlaca.getBoundingClientRect();
+    return caixa.height > 0 ? caixa.width / caixa.height : 1;
+}
+
+// Converte uma posição do rato no ecrã para coordenadas do desenho
+function pontoNoDesenho(clienteX: number, clienteY: number): Ponto {
+    const caixa = zonaPlaca.getBoundingClientRect();
+    return {
+        x: vista.x + ((clienteX - caixa.left) / caixa.width) * vista.largura,
+        y: vista.y + ((clienteY - caixa.top) / caixa.height) * vista.altura,
+    };
+}
+
+// Muda só o viewBox do SVG atual, sem o redesenhar
+function aplicarVista(): void {
+    const svg = zonaPlaca.querySelector("svg");
+    svg?.setAttribute("viewBox", `${vista.x} ${vista.y} ${vista.largura} ${vista.altura}`);
+    desenharControlosZoom();
+}
+
+function ampliarNoCentro(fator: number): void {
+    const centro = { x: vista.x + vista.largura / 2, y: vista.y + vista.altura / 2 };
+    vista = ampliar(vista, ajustada, centro, fator);
+    aplicarVista();
+}
+
+function criarBotaoZoom(texto: string, titulo: string, aoClicar: () => void): HTMLButtonElement {
+    const botao = document.createElement("button");
+    botao.textContent = texto;
+    botao.title = titulo;
+    botao.addEventListener("click", aoClicar);
+    return botao;
+}
+
+function desenharControlosZoom(): void {
+    const percentagem = document.createElement("span");
+    percentagem.textContent = `${Math.round(nivelDeZoom(vista, ajustada) * 100)}%`;
+
+    zonaZoom.replaceChildren(
+        criarBotaoZoom("−", "Afastar", () => ampliarNoCentro(1 / 1.5)),
+        percentagem,
+        criarBotaoZoom("+", "Aproximar", () => ampliarNoCentro(1.5)),
+        criarBotaoZoom("Ajustar", "Ver a placa inteira", () => {
+            vista = ajustada;
+            aplicarVista();
+        }),
+    );
+}
+
+// Roda do rato / touchpad: Ctrl (ou pinça) aproxima, sem Ctrl desloca — como no Figma
+zonaPlaca.addEventListener(
+    "wheel",
+    (evento) => {
+        evento.preventDefault();
+        if (evento.ctrlKey) {
+            const delta = Math.max(-50, Math.min(50, evento.deltaY));
+            vista = ampliar(vista, ajustada, pontoNoDesenho(evento.clientX, evento.clientY), Math.exp(-delta * 0.01));
+        } else {
+            const escala = vista.largura / zonaPlaca.getBoundingClientRect().width;
+            vista = deslocar(vista, ajustada, evento.deltaX * escala, evento.deltaY * escala);
+        }
+        aplicarVista();
+    },
+    { passive: false },
+);
+
+// Arrastar com o botão do meio, ou com o botão esquerdo e o Espaço premido
+zonaPlaca.addEventListener("pointerdown", (evento) => {
+    if (evento.button === 1 || (evento.button === 0 && espacoPremido)) {
+        evento.preventDefault();
+        arrasto = { x: evento.clientX, y: evento.clientY };
+        houveArrasto = false;
+        zonaPlaca.setPointerCapture(evento.pointerId);
+        zonaPlaca.classList.add("a-arrastar");
+    }
+});
+
+zonaPlaca.addEventListener("pointermove", (evento) => {
+    if (arrasto === undefined) {
+        return;
+    }
+    const escala = vista.largura / zonaPlaca.getBoundingClientRect().width;
+    vista = deslocar(vista, ajustada, (arrasto.x - evento.clientX) * escala, (arrasto.y - evento.clientY) * escala);
+    arrasto = { x: evento.clientX, y: evento.clientY };
+    houveArrasto = true;
+    aplicarVista();
+});
+
+zonaPlaca.addEventListener("pointerup", () => {
+    arrasto = undefined;
+    zonaPlaca.classList.remove("a-arrastar");
+});
+
+// Depois de um arrasto, o clique que o browser gera ao largar o botão não deve chegar aos furos
+zonaPlaca.addEventListener(
+    "click",
+    (evento) => {
+        if (houveArrasto) {
+            evento.stopPropagation();
+            houveArrasto = false;
+        }
+    },
+    true,
+);
+
+document.addEventListener("keydown", (evento) => {
+    if (evento.code === "Space") {
+        espacoPremido = true;
+        evento.preventDefault();   // impede a página de deslocar
+    }
+});
+
+document.addEventListener("keyup", (evento) => {
+    if (evento.code === "Space") {
+        espacoPremido = false;
+    }
+});
+
+// Ao redimensionar a janela, a vista volta a mostrar a placa inteira com a nova forma
+window.addEventListener("resize", () => {
+    ajustada = vistaAjustada(proporcaoDaZona());
+    vista = ajustada;
+    aplicarVista();
 });
 
 atualizar();
