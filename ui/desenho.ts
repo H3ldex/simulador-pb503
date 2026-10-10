@@ -26,6 +26,8 @@ export interface AcoesDaPlaca {
     aoClicarFuro(furo: string): void;
     aoClicarFio(indice: number): void;
     aoClicarChip(indice: number): void;
+    aoEntrarNoFuro(furo: string): void;
+    aoSairDoFuro(): void;
 }
 
 // Cria um elemento SVG com os atributos indicados e, opcionalmente, um texto
@@ -51,6 +53,9 @@ export function desenharPlaca(circuito: Circuito, acoes: AcoesDaPlaca, furoSelec
     desenharFios(svg, circuito, acoes);
     desenharLeds(svg, circuito);
     desenharInterruptores(svg, circuito, acoes);
+
+    // Camada de destaque: fica por cima de tudo e é redesenhada à parte
+    svg.append(criar("g", { class: "camada-destaque" }));
 
     return svg;
 }
@@ -87,6 +92,8 @@ function desenharFuros(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca,
         const quadrado = criar("rect", { x: p.x - 3, y: p.y - 3, width: 6, height: 6, class: classe });
         quadrado.addEventListener("click", () => acoes.aoClicarFuro(furo));
         svg.append(quadrado);
+        quadrado.addEventListener("mouseenter", () => acoes.aoEntrarNoFuro(furo));
+        quadrado.addEventListener("mouseleave", () => acoes.aoSairDoFuro());
     }
 }
 
@@ -179,5 +186,38 @@ function desenharFios(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca):
             grupo.append(criar("circle", { cx: ponta.x, cy: ponta.y, r: 2.2, fill: cor }));
         }
         svg.append(grupo);
-    });
+    }); 
+}
+
+// Destaca todos os furos do mesmo nó que o furo indicado (ou limpa o destaque)
+export function desenharDestaqueDoNo(svg: SVGElement, circuito: Circuito, furo: string | undefined): void {
+    const camada = svg.querySelector(".camada-destaque");
+    if (camada === null) {
+        return;
+    }
+    camada.replaceChildren();
+    if (furo === undefined) {
+        return;
+    }
+
+    const furos = circuito.base.furosDoMesmoNo(furo);
+    const valor = circuito.valorNoFuro(furo);
+    const classeDoValor = valor === "Z" ? "valor-z" : `valor-${valor}`;
+
+    for (const outro of furos) {
+        const p = posicaoDoFuro(outro);
+        camada.append(criar("rect", {
+            x: p.x - 4, y: p.y - 4, width: 8, height: 8, rx: 1.5,
+            class: `destaque-no ${classeDoValor}`,
+        }));
+    }
+
+    // Etiqueta junto ao furo
+    const quantidade = furos.length === 1 ? "furo isolado" : `${furos.length} furos ligados`;
+    const texto = `${quantidade} · ${valor === "Z" ? "solto" : `valor ${valor}`}`;
+    const p = posicaoDoFuro(furo);
+    const etiqueta = criar("g", { class: "etiqueta-no" });
+    etiqueta.append(criar("rect", { x: p.x + 6, y: p.y - 18, width: texto.length * 3.9 + 8, height: 12, rx: 3 }));
+    etiqueta.append(criar("text", { x: p.x + 10, y: p.y - 9.5 }, texto));
+    camada.append(etiqueta);
 }

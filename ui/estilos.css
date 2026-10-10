@@ -201,3 +201,13 @@ body {
     .aplicacao { grid-template-columns: 1fr; height: auto; }
     .zona-placa { height: 80vh; }
 }
+
+.camada-destaque { pointer-events: none; }
+
+.destaque-no { stroke-width: 1.5; }
+.destaque-no.valor-1 { stroke: #ff3b30; fill: rgba(255, 59, 48, 0.3); }
+.destaque-no.valor-0 { stroke: #34c759; fill: rgba(52, 199, 89, 0.3); }
+.destaque-no.valor-z { stroke: #3b6fb6; fill: rgba(59, 111, 182, 0.3); }
+
+.etiqueta-no rect { fill: #111; opacity: 0.88; }
+.etiqueta-no text { fill: #fff; font-size: 7px; }

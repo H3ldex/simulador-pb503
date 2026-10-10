@@ -3,7 +3,7 @@ import { montarLab1 } from "../src/exemplos/lab1";
 import {
     criar74LS00, criar74LS02, criar74LS04, criar74LS08, criar74LS32, criar74LS86,
 } from "../src/chips/catalogo74LS";
-import { desenharPlaca, type AcoesDaPlaca } from "./desenho";
+import { desenharDestaqueDoNo,desenharPlaca, type AcoesDaPlaca } from "./desenho";
 import { ICONES, type NomeIcone } from "./icons";
 import type { Ponto } from "./layout";
 import { ampliar, deslocar, nivelDeZoom, vistaAjustada, type Vista } from "./vista";
@@ -73,6 +73,7 @@ let vista: Vista = ajustada;
 let espacoPremido = false;
 let arrasto: { x: number; y: number } | undefined;
 let houveArrasto = false;
+let furoSobRato: string | undefined;
 
 // --- Funções auxiliares ---
 
@@ -153,6 +154,15 @@ const acoes: AcoesDaPlaca = {
             indicacao = { tipo: "sucesso", texto: "Chip apagado." };
             atualizar();
         }
+    },
+
+    aoEntrarNoFuro: (furo) => {
+        furoSobRato = furo;
+        atualizarDestaque();
+    },
+    aoSairDoFuro: () => {
+        furoSobRato = undefined;
+        atualizarDestaque();
     },
 };
 
@@ -436,5 +446,14 @@ window.addEventListener("resize", () => {
     vista = ajustada;
     aplicarVista();
 });
+
+// Redesenha só a camada de destaque, sem tocar no resto da placa
+function atualizarDestaque(): void {
+    const svg = zonaPlaca.querySelector("svg");
+    if (svg !== null) {
+        desenharDestaqueDoNo(svg, circuito, furoSobRato);
+    }
+}
+atualizarDestaque();
 
 atualizar();

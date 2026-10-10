@@ -124,6 +124,30 @@ describe("BaseMontagem — tamanho e furos inválidos", () => {
         });
     });
 
+    describe("BaseMontagem — furos do mesmo nó", () => {
+        it("uma coluna tem 5 furos ligados", () => {
+            const base = new BaseMontagem();
+            expect(base.furosDoMesmoNo("P1:C:7").sort()).toEqual(
+                ["P1:A:7", "P1:B:7", "P1:C:7", "P1:D:7", "P1:E:7"].sort()
+            );
+        });
     
+        it("um fio junta os furos das duas colunas", () => {
+            const base = new BaseMontagem();
+            base.ligarFio("P1:C:5", "P1:C:9");
+            expect(base.furosDoMesmoNo("P1:A:5").length).toBe(10);
+            expect(base.furosDoMesmoNo("P1:A:5")).toContain("P1:E:9");
+        });
+    
+        it("meia fila de barramento tem 25 furos ligados", () => {
+            const base = new BaseMontagem();
+            expect(base.furosDoMesmoNo("P1:S1:3").length).toBe(25);
+        });
+    
+        it("o terminal de um interruptor tem 2 furos ligados", () => {
+            const base = new BaseMontagem();
+            expect(base.furosDoMesmoNo(furoDoInterruptor(4)).length).toBe(2);
+        });
+    });
 
 });

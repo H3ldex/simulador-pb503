@@ -84,6 +84,12 @@ export class BaseMontagem {
         return this.ligacoes.encontrar(furo);
     }
 
+    // Todos os furos que pertencem ao mesmo nó elétrico que este
+    furosDoMesmoNo(furo: string): string[] {
+        const no = this.noDoFuro(furo);
+        return this.listarFuros().filter((outro) => this.ligacoes.encontrar(outro) === no);
+    }
+
     // --- Construção da placa ---
 
     private criarBarraAlimentacao(): void {
