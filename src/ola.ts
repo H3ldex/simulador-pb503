@@ -1,1 +1,3 @@
-const tensao: number = 5;
+export function somar(a: number, b: number): number{
+    return a + b;
+}
