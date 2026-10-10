@@ -57,4 +57,27 @@ describe("74LS04 (NOT)", () => {
         expect(chip.calcularSaidas(pinosAlimentados([entrada, 0])).get(saida)).toBe(1);
         expect(chip.calcularSaidas(pinosAlimentados([entrada, 1])).get(saida)).toBe(0);
     });
+
+    describe("descreverPino", () => {
+        it("74LS08: alimentação, entradas e saídas", () => {
+            const chip = criar74LS08();
+            expect(chip.descreverPino(14)).toBe("VCC, alimentação +5 V");
+            expect(chip.descreverPino(7)).toBe("GND, massa");
+            expect(chip.descreverPino(1)).toBe("entrada A da porta 1");
+            expect(chip.descreverPino(3)).toBe("saída da porta 1");
+            expect(chip.descreverPino(8)).toBe("saída da porta 3");
+        });
+    
+        it("74LS02: a saída vem antes das entradas", () => {
+            const chip = criar74LS02();
+            expect(chip.descreverPino(1)).toBe("saída da porta 1");
+            expect(chip.descreverPino(2)).toBe("entrada A da porta 1");
+        });
+    
+        it("74LS04: entradas e saídas dos inversores", () => {
+            const chip = criar74LS04();
+            expect(chip.descreverPino(1)).toBe("entrada da porta 1");
+            expect(chip.descreverPino(12)).toBe("saída da porta 6");
+        });
+    });
 });

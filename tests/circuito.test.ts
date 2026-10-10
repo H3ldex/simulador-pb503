@@ -185,4 +185,31 @@ describe("Circuito — erros de montagem do enunciado", () => {
             expect(circuito.listarChips()).toEqual([]);
         });
     });
+
+    describe("Circuito — ligações de um ponto", () => {
+        it("no Lab 1, o pino 14 está ligado à fila +5V", () => {
+            expect(montarLab1().ligacoesDoFuro(furoDoPino(1, 10, 14))).toEqual([
+                "fila +5V da barra de alimentação",
+                "pino 14 do 74LS08 (VCC, alimentação +5 V)",
+            ]);
+        });
+    
+        it("no Lab 1, o pino 1 está ligado ao interruptor S1", () => {
+            expect(montarLab1().ligacoesDoFuro(furoDoPino(1, 10, 1))).toEqual([
+                "interruptor S1",
+                "pino 1 do 74LS08 (entrada A da porta 1)",
+            ]);
+        });
+    
+        it("no Lab 1, a saída da porta 1 está ligada a uma entrada da porta 3", () => {
+            expect(montarLab1().ligacoesDoFuro(furoDoPino(1, 10, 3))).toEqual([
+                "pino 3 do 74LS08 (saída da porta 1)",
+                "pino 10 do 74LS08 (entrada B da porta 3)",
+            ]);
+        });
+    
+        it("uma coluna vazia não tem nada ligado", () => {
+            expect(new Circuito().ligacoesDoFuro("P2:A:30")).toEqual([]);
+        });
+    });
 });

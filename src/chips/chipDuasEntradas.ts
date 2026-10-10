@@ -1,5 +1,5 @@
 import { lerEntrada, saidasIndefinidas, verificarAlimentacao, type EstadoPinos } from "./comum";
-import type { NumeroPino } from "../pinos";
+import { PINO_GND, PINO_VCC, type NumeroPino } from "../pinos";
 import type { ValorLogico } from "../valorLogico";
 
 export interface PortaDuasEntradas {
@@ -38,4 +38,27 @@ export class ChipDuasEntradas {
         }
         return saidas;
     }
+
+        // Para que serve cada pino, em palavras
+        descreverPino(pino: NumeroPino): string {
+            if (pino === PINO_VCC) {
+                return "VCC, alimentação +5 V";
+            }
+            if (pino === PINO_GND) {
+                return "GND, massa";
+            }
+            for (const [indice, porta] of this.portas.entries()) {
+                const numero = indice + 1;
+                if (porta.entradaA === pino) {
+                    return `entrada A da porta ${numero}`;
+                }
+                if (porta.entradaB === pino) {
+                    return `entrada B da porta ${numero}`;
+                }
+                if (porta.saida === pino) {
+                    return `saída da porta ${numero}`;
+                }
+            }
+            return "sem ligação interna";
+        }
 }

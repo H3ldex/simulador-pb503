@@ -1,4 +1,4 @@
-import { BaseMontagem, furoDoInterruptor, furoDoLed } from "./BaseMontagem";
+import { NUMERO_DE_LEDS,BaseMontagem, furoDoInterruptor, furoDoLed } from "./BaseMontagem";
 import { calcularFuroDoPino, furosDoChip } from "./montagem";
 import { TODOS_OS_PINOS, type NumeroPino } from "./pinos";
 import type { ValorLogico } from "./valorLogico";
@@ -57,6 +57,12 @@ export interface AvaliacaoDeMontagem {
     valida: boolean;
     motivo: string;
     furos: { furo: string; livre: boolean }[];   // só os pinos que caem dentro da breadboard
+}
+
+export interface ChipLogico {
+    readonly nome: string;
+    calcularSaidas(pinos: EstadoPinos): EstadoPinos;
+    descreverPino(pino: NumeroPino): string;
 }
 
 const MAXIMO_DE_ITERACOES = 100;
@@ -197,6 +203,37 @@ export class Circuito {
 
     estadoDoLed(numero: number): EstadoLed {
         return this.indicadores.estadoDoLed(this.valorNoFuro(furoDoLed(numero)));
+    }
+
+    // Tudo o que está ligado ao nó deste furo, em palavras
+    ligacoesDoFuro(furo: string): string[] {
+        const no = this.base.noDoFuro(furo);
+        const ligacoes: string[] = [];
+    
+        for (const fila of FILAS) {
+            if (this.base.noDoFuro(`ALIM:${fila}:1`) === no) {
+                ligacoes.push(`fila ${fila} da barra de alimentação`);
+            }
+        }
+        for (const numero of INTERRUPTORES) {
+            if (this.base.noDoFuro(furoDoInterruptor(numero)) === no) {
+                ligacoes.push(`interruptor S${numero}`);
+            }
+        }
+        for (let numero = 1; numero <= NUMERO_DE_LEDS; numero++) {
+            if (this.base.noDoFuro(furoDoLed(numero)) === no) {
+                ligacoes.push(`LED ${numero}`);
+            }
+        }
+        for (const montado of this.chips) {
+            for (const [pino, furoDoPinoMontado] of montado.furos) {
+                if (this.base.noDoFuro(furoDoPinoMontado) === no) {
+                    ligacoes.push(`pino ${pino} do ${montado.chip.nome} (${montado.chip.descreverPino(pino)})`);
+                }
+            }
+        }
+    
+        return ligacoes;
     }
 
     // --- Passos internos ---
