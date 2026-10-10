@@ -1,0 +1,15 @@
+# Dependências (pacotes descarregados pelo npm)
+node_modules/
+
+# Build (JavaScript gerado pelo compilador de TypeScript)
+dist/
+
+# Ficheiros de log
+*.log
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Relatórios de cobertura de testes (Vitest)
+coverage/
