@@ -15,6 +15,7 @@ import {
 import type { Fio } from "../src/circuito";
 import { furoDoPino } from "../src/montagem";
 import { TODOS_OS_PINOS } from "../src/pinos";
+import type { Vista } from "./vista";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const INTERRUPTORES: NumeroInterruptor[] = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -42,8 +43,8 @@ function criar(tag: string, atributos: Record<string, string | number>, texto?: 
     return elemento;
 }
 
-export function desenharPlaca(circuito: Circuito, acoes: AcoesDaPlaca, furoSelecionado?: string): SVGElement {
-    const svg = criar("svg", { viewBox: `0 0 ${LARGURA} ${ALTURA}`, class: "placa" });
+export function desenharPlaca(circuito: Circuito, acoes: AcoesDaPlaca, vista: Vista, furoSelecionado?: string): SVGElement {
+    const svg = criar("svg", { viewBox: `${vista.x} ${vista.y} ${vista.largura} ${vista.altura}`, class: "placa" });
     svg.append(criar("rect", { x: 0, y: 0, width: LARGURA, height: ALTURA, rx: 12, class: "fundo" }));
 
     desenharPower(svg, circuito, acoes);
@@ -190,7 +191,12 @@ function desenharFios(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca):
 }
 
 // Destaca todos os furos do mesmo nó que o furo indicado (ou limpa o destaque)
-export function desenharDestaqueDoNo(svg: SVGElement, circuito: Circuito, furo: string | undefined): void {
+export function desenharDestaqueDoNo(
+    svg: SVGElement,
+    circuito: Circuito,
+    furo: string | undefined,
+    mostrarEtiqueta: boolean,
+): void {
     const camada = svg.querySelector(".camada-destaque");
     if (camada === null) {
         return;
@@ -210,6 +216,9 @@ export function desenharDestaqueDoNo(svg: SVGElement, circuito: Circuito, furo: 
             x: p.x - 4, y: p.y - 4, width: 8, height: 8, rx: 1.5,
             class: `destaque-no ${classeDoValor}`,
         }));
+    }
+    if (!mostrarEtiqueta) {
+        return;
     }
 
     // Etiqueta junto ao furo

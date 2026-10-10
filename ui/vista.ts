@@ -61,3 +61,13 @@ export function ampliar(vista: Vista, ajustada: Vista, ponto: Ponto, fator: numb
 export function deslocar(vista: Vista, ajustada: Vista, dx: number, dy: number): Vista {
     return limitar({ ...vista, x: vista.x + dx, y: vista.y + dy }, ajustada);
 }
+
+// Quando a zona da placa muda de tamanho: mantém o zoom e o centro, com a nova forma
+export function adaptarVista(vista: Vista, ajustadaAntiga: Vista, ajustadaNova: Vista): Vista {
+    const zoom = nivelDeZoom(vista, ajustadaAntiga);
+    const centro = { x: vista.x + vista.largura / 2, y: vista.y + vista.altura / 2 };
+    const largura = ajustadaNova.largura / zoom;
+    const altura = ajustadaNova.altura / zoom;
+    // Deslocar 0 só serve para aplicar os limites
+    return deslocar({ x: centro.x - largura / 2, y: centro.y - altura / 2, largura, altura }, ajustadaNova, 0, 0);
+}

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { ALTURA, LARGURA } from "../ui/layout";
-import { ampliar, deslocar, nivelDeZoom, vistaAjustada } from "../ui/vista";
+import { adaptarVista, ampliar, deslocar, nivelDeZoom, vistaAjustada } from "../ui/vista";
 
 describe("vista", () => {
     it("num ecrã largo, mostra a placa inteira centrada na horizontal", () => {
@@ -47,5 +47,18 @@ describe("vista", () => {
         const deslocada = deslocar(aproximada, ajustada, 100000, 100000);
         expect(deslocada.x).toBeCloseTo(ajustada.x + ajustada.largura - aproximada.largura);
         expect(deslocada.y).toBeCloseTo(ajustada.y + ajustada.altura - aproximada.altura);
+    });
+
+    it("ao redimensionar a zona, mantém o zoom, o centro e adota a nova forma", () => {
+        const antiga = vistaAjustada(1.5);
+        const vista = ampliar(antiga, antiga, { x: 470, y: 435 }, 2);
+        const nova = vistaAjustada(1.2);
+
+        const adaptada = adaptarVista(vista, antiga, nova);
+
+        expect(nivelDeZoom(adaptada, nova)).toBeCloseTo(2);
+        expect(adaptada.x + adaptada.largura / 2).toBeCloseTo(vista.x + vista.largura / 2);
+        expect(adaptada.y + adaptada.altura / 2).toBeCloseTo(vista.y + vista.altura / 2);
+        expect(adaptada.largura / adaptada.altura).toBeCloseTo(1.2);
     });
 });

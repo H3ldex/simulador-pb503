@@ -14,10 +14,12 @@ const SAIDA_NEGADA = `<circle cx="19.5" cy="12" r="1.5"/><path d="M21 12h1.5"/>`
 export const ICONES = {
     // Ferramentas
     usar: icone(`<path d="M6 3l12 9-5 1 3 6-2 1-3-6-4 4z"/>`),
+    prova: icone(`<path d="M4 20l4-4"/><path d="M8 16l-1-1 9-9 3 3-9 9z"/><path d="M17 4l3 3"/>`),
     fio: icone(`<path d="M5 18C7 6 17 6 19 18"/><circle cx="5" cy="18" r="1.5"/><circle cx="19" cy="18" r="1.5"/>`),
     apagar: icone(`<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>`),
     limpar: icone(`<path d="M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5"/>`),
     exemplo: icone(`<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5"/>`),
+    
 
     // Portas lógicas
     and: icone(ENTRADAS + CORPO_AND + SAIDA),

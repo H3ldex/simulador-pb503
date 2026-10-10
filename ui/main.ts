@@ -6,12 +6,13 @@ import {
 import { desenharDestaqueDoNo,desenharPlaca, type AcoesDaPlaca } from "./desenho";
 import { ICONES, type NomeIcone } from "./icons";
 import type { Ponto } from "./layout";
-import { ampliar, deslocar, nivelDeZoom, vistaAjustada, type Vista } from "./vista";
+import { adaptarVista, ampliar, deslocar, nivelDeZoom, vistaAjustada, type Vista } from "./vista";
 
 // --- Tipos ---
 
 type Modo =
     | { tipo: "usar" }
+    | { tipo: "prova" }
     | { tipo: "fio"; inicio: string | undefined }
     | { tipo: "chip"; nome: string; criar: () => ChipLogico }
     | { tipo: "apagar" };
@@ -117,7 +118,7 @@ function aoClicarFuro(furo: string): void {
             const { placa, coluna } = posicaoParaChip(furo);
             circuito.montarChip(modo.criar(), placa, coluna);
             indicacao = { tipo: "sucesso", texto: `${modo.nome} montado na breadboard ${placa}, com o pino 1 na coluna ${coluna}.` };
-        } else {
+        } else if (modo.tipo === "prova") {
             const valor = circuito.valorNoFuro(furo);
             indicacao = { tipo: "info", texto: `Ponta de prova em ${furo}: ${valor === "Z" ? "solto (sem valor)" : `valor ${valor}`}.` };
         }
@@ -217,9 +218,14 @@ function desenharLateral(): void {
         cabecalho,
         criarSeccao("Ferramentas", [
             criarBotao({
-                icone: "usar", titulo: "Usar", detalhe: "Interruptores e ponta de prova",
+                icone: "usar", titulo: "Usar", detalhe: "Interruptores e POWER",
                 ativo: modo.tipo === "usar",
-                aoClicar: () => mudarModo({ tipo: "usar" }, "Clica nos interruptores, no POWER, ou num furo para ver o seu valor."),
+                aoClicar: () => mudarModo({ tipo: "usar" }, "Clica nos interruptores e no POWER para testar o circuito."),
+            }),
+            criarBotao({
+                icone: "prova", titulo: "Ponta de prova", detalhe: "Mede o valor de um ponto",
+                ativo: modo.tipo === "prova",
+                aoClicar: () => mudarModo({ tipo: "prova" }, "Passa o rato pelos furos para ver o nó e o seu valor."),
             }),
             criarBotao({
                 icone: "fio", titulo: "Ligar fio", detalhe: "Clica em dois furos",
@@ -308,7 +314,7 @@ function atualizar(): void {
 
     desenharLateral();
     desenharIndicacoes(avisos);
-    zonaPlaca.replaceChildren(desenharPlaca(circuito, acoes, furoSelecionado));
+    zonaPlaca.replaceChildren(desenharPlaca(circuito, acoes, vista, furoSelecionado));
 }
 aplicarVista();
 
@@ -440,20 +446,24 @@ document.addEventListener("keyup", (evento) => {
     }
 });
 
-// Ao redimensionar a janela, a vista volta a mostrar a placa inteira com a nova forma
-window.addEventListener("resize", () => {
-    ajustada = vistaAjustada(proporcaoDaZona());
-    vista = ajustada;
+// Quando a zona da placa muda de tamanho (janela, avisos a aparecer…), mantém o zoom
+new ResizeObserver(() => {
+    const novaAjustada = vistaAjustada(proporcaoDaZona());
+    vista = adaptarVista(vista, ajustada, novaAjustada);
+    ajustada = novaAjustada;
     aplicarVista();
-});
+}).observe(zonaPlaca);
 
 // Redesenha só a camada de destaque, sem tocar no resto da placa
 function atualizarDestaque(): void {
     const svg = zonaPlaca.querySelector("svg");
-    if (svg !== null) {
-        desenharDestaqueDoNo(svg, circuito, furoSobRato);
+    if (svg === null) {
+        return;
     }
+    const destacar = modo.tipo === "prova" || modo.tipo === "fio";
+    desenharDestaqueDoNo(svg, circuito, destacar ? furoSobRato : undefined, modo.tipo === "prova");
 }
+
 atualizarDestaque();
 
 atualizar();
