@@ -3,12 +3,22 @@ import { montarLab1 } from "../src/exemplos/lab1";
 import {
     criar74LS00, criar74LS02, criar74LS04, criar74LS08, criar74LS32, criar74LS86,
 } from "../src/chips/catalogo74LS";
-import { desenharDestaqueDoNo, desenharPlaca, desenharSombraDoChip, type AcoesDaPlaca, type SombraDoChip } from "./desenho";
+import { descreverLocal, descreverValor } from "../src/descricao";
+import { furoDoPino } from "../src/montagem";
+import {
+    desenharDestaqueDoNo,
+    desenharPlaca,
+    desenharSombraDoChip,
+    type AcoesDaPlaca,
+    type SombraDoChip,
+} from "./desenho";
 import { ICONES, type NomeIcone } from "./icons";
 import type { Ponto } from "./layout";
 import { adaptarVista, ampliar, deslocar, nivelDeZoom, vistaAjustada, type Vista } from "./vista";
 
-// --- Tipos ---
+// =============================================================
+// Tipos
+// =============================================================
 
 type Modo =
     | { tipo: "usar" }
@@ -24,7 +34,16 @@ interface Indicacao {
     texto: string;
 }
 
-// --- Catálogo, exemplos e constantes ---
+interface ConteudoDaDica {
+    titulo: string;
+    linhas: string[];
+}
+
+type AlvoDaDica = { tipo: "fio"; indice: number } | { tipo: "chip"; indice: number };
+
+// =============================================================
+// Catálogo, exemplos e constantes
+// =============================================================
 
 const CATALOGO: { nome: string; porta: string; detalhe: string; icone: NomeIcone; criar: () => ChipLogico }[] = [
     { nome: "74LS00", porta: "NAND", detalhe: "4 portas de 2 entradas", icone: "nand", criar: criar74LS00 },
@@ -48,7 +67,9 @@ const ICONE_DA_INDICACAO: Record<TipoIndicacao, NomeIcone> = {
 
 const LINHAS_PRINCIPAIS = new Set(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]);
 
-// --- Elementos da página e estado ---
+// =============================================================
+// Elementos da página
+// =============================================================
 
 function obterElemento(seletor: string): HTMLElement {
     const elemento = document.querySelector<HTMLElement>(seletor);
@@ -62,6 +83,11 @@ const lateral = obterElemento("#lateral");
 const zonaIndicacao = obterElemento("#indicacao");
 const zonaPlaca = obterElemento("#placa");
 const zonaZoom = obterElemento("#zoom");
+const dica = obterElemento("#dica");
+
+// =============================================================
+// Estado da aplicação
+// =============================================================
 
 let circuito = new Circuito();
 let modo: Modo = { tipo: "usar" };
@@ -69,14 +95,22 @@ let indicacao: Indicacao = {
     tipo: "info",
     texto: "Placa vazia. Escolhe um circuito integrado ou um exemplo na barra lateral para começar.",
 };
+
+// O que está debaixo do rato
+let furoSobRato: string | undefined;
+let alvoDaDica: AlvoDaDica | undefined;
+let posicaoDoRato: Ponto = { x: 0, y: 0 };   // em píxeis, relativa à zona da placa
+
+// Zoom e deslocamento
 let ajustada: Vista = vistaAjustada(proporcaoDaZona());
 let vista: Vista = ajustada;
 let espacoPremido = false;
 let arrasto: { x: number; y: number } | undefined;
 let houveArrasto = false;
-let furoSobRato: string | undefined;
 
-// --- Funções auxiliares ---
+// =============================================================
+// Auxiliares
+// =============================================================
 
 function mensagemDeErro(erro: unknown): string {
     return erro instanceof Error ? erro.message : String(erro);
@@ -97,7 +131,9 @@ function posicaoParaChip(furo: string): { placa: number; coluna: number } {
     return { placa: Number(peca.slice(1)), coluna: Number(textoNumero) };
 }
 
-// --- O que acontece em cada clique na placa ---
+// =============================================================
+// Ações na placa
+// =============================================================
 
 function aoClicarFuro(furo: string): void {
     try {
@@ -119,8 +155,7 @@ function aoClicarFuro(furo: string): void {
             circuito.montarChip(modo.criar(), placa, coluna);
             indicacao = { tipo: "sucesso", texto: `${modo.nome} montado na breadboard ${placa}, com o pino 1 na coluna ${coluna}.` };
         } else if (modo.tipo === "prova") {
-            const valor = circuito.valorNoFuro(furo);
-            indicacao = { tipo: "info", texto: `Ponta de prova em ${furo}: ${valor === "Z" ? "solto (sem valor)" : `valor ${valor}`}.` };
+            indicacao = { tipo: "info", texto: `Ponta de prova em ${descreverLocal(furo)}: ${descreverValor(circuito.valorNoFuro(furo))}.` };
         }
     } catch (erro) {
         indicacao = { tipo: "erro", texto: mensagemDeErro(erro) };
@@ -145,6 +180,7 @@ const acoes: AcoesDaPlaca = {
     aoClicarFio: (indice) => {
         if (modo.tipo === "apagar") {
             circuito.removerFio(indice);
+            alvoDaDica = undefined;
             indicacao = { tipo: "sucesso", texto: "Fio apagado." };
             atualizar();
         }
@@ -152,22 +188,42 @@ const acoes: AcoesDaPlaca = {
     aoClicarChip: (indice) => {
         if (modo.tipo === "apagar") {
             circuito.removerChip(indice);
+            alvoDaDica = undefined;
             indicacao = { tipo: "sucesso", texto: "Chip apagado." };
             atualizar();
         }
     },
-
     aoEntrarNoFuro: (furo) => {
         furoSobRato = furo;
         atualizarDestaque();
+        atualizarDica();
     },
     aoSairDoFuro: () => {
         furoSobRato = undefined;
         atualizarDestaque();
+        atualizarDica();
+    },
+    aoEntrarNoFio: (indice) => {
+        alvoDaDica = { tipo: "fio", indice };
+        atualizarDica();
+    },
+    aoSairDoFio: () => {
+        alvoDaDica = undefined;
+        atualizarDica();
+    },
+    aoEntrarNoChip: (indice) => {
+        alvoDaDica = { tipo: "chip", indice };
+        atualizarDica();
+    },
+    aoSairDoChip: () => {
+        alvoDaDica = undefined;
+        atualizarDica();
     },
 };
 
-// --- Barra lateral ---
+// =============================================================
+// Barra lateral
+// =============================================================
 
 function criarBotao(opcoes: {
     icone: NomeIcone;
@@ -225,7 +281,7 @@ function desenharLateral(): void {
             criarBotao({
                 icone: "prova", titulo: "Ponta de prova", detalhe: "Mede o valor de um ponto",
                 ativo: modo.tipo === "prova",
-                aoClicar: () => mudarModo({ tipo: "prova" }, "Passa o rato pelos furos para ver o nó e o seu valor."),
+                aoClicar: () => mudarModo({ tipo: "prova" }, "Passa o rato pelos furos para ver o nó, o valor e o que está ligado."),
             }),
             criarBotao({
                 icone: "fio", titulo: "Ligar fio", detalhe: "Clica em dois furos",
@@ -278,7 +334,9 @@ function desenharLateral(): void {
     );
 }
 
-// --- Indicações ---
+// =============================================================
+// Indicações
+// =============================================================
 
 function criarIndicacao(tipo: TipoIndicacao, texto: string): HTMLElement {
     const caixa = document.createElement("div");
@@ -297,35 +355,158 @@ function desenharIndicacoes(avisos: string[]): void {
     );
 }
 
-// --- Ciclo principal ---
+// =============================================================
+// Camada de destaque (nó sob o rato e sombra do chip)
+// =============================================================
 
-function atualizar(): void {
-    const resultado = circuito.simular();
-
-    const avisos: string[] = [];
-    if (!resultado.estabilizou) {
-        avisos.push("O circuito não estabiliza: há uma saída ligada de volta a uma entrada que fica a oscilar.");
-    }
-    for (const curto of resultado.curtos) {
-        avisos.push(`Curto-circuito entre ${curto.condutores.join(" e ")}.`);
+function atualizarDestaque(): void {
+    const svg = zonaPlaca.querySelector("svg");
+    if (svg === null) {
+        return;
     }
 
-    const furoSelecionado = modo.tipo === "fio" ? modo.inicio : undefined;
+    if (modo.tipo === "chip") {
+        desenharSombraDoChip(svg, sombraDoChip(modo.nome));
+        return;
+    }
 
-    desenharLateral();
-    desenharIndicacoes(avisos);
-    zonaPlaca.replaceChildren(desenharPlaca(circuito, acoes, vista, furoSelecionado));
+    const destacar = modo.tipo === "prova" || modo.tipo === "fio";
+    desenharDestaqueDoNo(svg, circuito, destacar ? furoSobRato : undefined, false);
 }
-aplicarVista();
 
-// Esc cancela um fio a meio
-document.addEventListener("keydown", (evento) => {
-    if (evento.key === "Escape" && modo.tipo === "fio" && modo.inicio !== undefined) {
-        mudarModo({ tipo: "fio", inicio: undefined }, "Fio cancelado.");
+// Onde ficaria o chip escolhido, se o rato estiver num furo das linhas A a J
+function sombraDoChip(nome: string): SombraDoChip | undefined {
+    if (furoSobRato === undefined) {
+        return undefined;
     }
-});
+    try {
+        const { placa, coluna } = posicaoParaChip(furoSobRato);
+        return { nome, placa, coluna, avaliacao: circuito.avaliarMontagem(placa, coluna) };
+    } catch {
+        return undefined;   // o rato está num barramento ou num terminal: sem sombra
+    }
+}
 
-// --- Zoom e deslocamento ---
+// =============================================================
+// Dica que segue o rato
+// =============================================================
+
+function conteudoDoFuro(furo: string): ConteudoDaDica {
+    const ligacoes = circuito.ligacoesDoFuro(furo);
+    const linhas = [`Valor: ${descreverValor(circuito.valorNoFuro(furo))}`];
+    if (ligacoes.length === 0) {
+        linhas.push("Nada ligado a este ponto.");
+    } else {
+        linhas.push("Ligado a:", ...ligacoes.map((ligacao) => `• ${ligacao}`));
+    }
+    return { titulo: descreverLocal(furo), linhas };
+}
+
+function conteudoDoFio(indice: number): ConteudoDaDica | undefined {
+    const fio = circuito.listarFios()[indice];
+    if (fio === undefined) {
+        return undefined;
+    }
+    const linhas = [
+        `De: ${descreverLocal(fio.de)}`,
+        `Para: ${descreverLocal(fio.para)}`,
+        `Valor: ${descreverValor(circuito.valorNoFuro(fio.de))}`,
+    ];
+    if (modo.tipo === "apagar") {
+        linhas.push("Clica para apagar este fio.");
+    }
+    return { titulo: "Fio", linhas };
+}
+
+function conteudoDoChip(indice: number): ConteudoDaDica | undefined {
+    const chip = circuito.listarChips()[indice];
+    if (chip === undefined) {
+        return undefined;
+    }
+    const item = CATALOGO.find((entrada) => entrada.nome === chip.nome);
+    const vcc = circuito.valorNoFuro(furoDoPino(chip.placa, chip.colunaPino1, 14));
+    const gnd = circuito.valorNoFuro(furoDoPino(chip.placa, chip.colunaPino1, 7));
+
+    const linhas: string[] = [];
+    if (item !== undefined) {
+        linhas.push(item.detalhe);
+    }
+    linhas.push(`Pino 1 na breadboard ${chip.placa}, coluna ${chip.colunaPino1}`);
+
+    if (!circuito.fonte.estaLigada()) {
+        linhas.push("Base desligada: liga o POWER.");
+    } else if (vcc === 1 && gnd === 0) {
+        linhas.push("Alimentação: ligada ✓");
+    } else {
+        linhas.push("Sem alimentação: liga o pino 14 a +5 V e o pino 7 a 0 V.");
+    }
+
+    if (modo.tipo === "apagar") {
+        linhas.push("Clica para apagar este chip.");
+    }
+
+    return { titulo: item !== undefined ? `${chip.nome} · ${item.porta}` : chip.nome, linhas };
+}
+
+// Decide o que a dica deve mostrar agora (ou nada)
+function conteudoAtual(): ConteudoDaDica | undefined {
+    if (alvoDaDica?.tipo === "fio") {
+        return conteudoDoFio(alvoDaDica.indice);
+    }
+    if (alvoDaDica?.tipo === "chip") {
+        return conteudoDoChip(alvoDaDica.indice);
+    }
+    if (modo.tipo === "prova" && furoSobRato !== undefined) {
+        return conteudoDoFuro(furoSobRato);
+    }
+    return undefined;
+}
+
+function atualizarDica(): void {
+    const conteudo = conteudoAtual();
+    if (conteudo === undefined) {
+        dica.hidden = true;
+        return;
+    }
+
+    const titulo = document.createElement("strong");
+    titulo.textContent = conteudo.titulo;
+    dica.replaceChildren(
+        titulo,
+        ...conteudo.linhas.map((texto) => {
+            const linha = document.createElement("div");
+            linha.textContent = texto;
+            return linha;
+        }),
+    );
+    dica.hidden = false;
+    posicionarDica();
+}
+
+// Põe a dica junto ao rato, sem a deixar sair da zona da placa
+function posicionarDica(): void {
+    if (dica.hidden) {
+        return;
+    }
+    const caixa = zonaPlaca.getBoundingClientRect();
+    const margem = 14;
+
+    let x = posicaoDoRato.x + margem;
+    let y = posicaoDoRato.y + margem;
+    if (x + dica.offsetWidth > caixa.width) {
+        x = posicaoDoRato.x - dica.offsetWidth - margem;
+    }
+    if (y + dica.offsetHeight > caixa.height) {
+        y = posicaoDoRato.y - dica.offsetHeight - margem;
+    }
+
+    dica.style.left = `${Math.max(0, x)}px`;
+    dica.style.top = `${Math.max(0, y)}px`;
+}
+
+// =============================================================
+// Zoom e deslocamento
+// =============================================================
 
 function proporcaoDaZona(): number {
     const caixa = zonaPlaca.getBoundingClientRect();
@@ -377,6 +558,51 @@ function desenharControlosZoom(): void {
     );
 }
 
+// =============================================================
+// Ciclo principal: simula e redesenha tudo
+// =============================================================
+
+function atualizar(): void {
+    const resultado = circuito.simular();
+
+    const avisos: string[] = [];
+    if (!resultado.estabilizou) {
+        avisos.push("O circuito não estabiliza: há uma saída ligada de volta a uma entrada que fica a oscilar.");
+    }
+    for (const curto of resultado.curtos) {
+        avisos.push(`Curto-circuito entre ${curto.condutores.join(" e ")}.`);
+    }
+
+    const furoSelecionado = modo.tipo === "fio" ? modo.inicio : undefined;
+
+    desenharLateral();
+    desenharIndicacoes(avisos);
+    zonaPlaca.replaceChildren(desenharPlaca(circuito, acoes, vista, furoSelecionado));
+    aplicarVista();
+    atualizarDestaque();
+    atualizarDica();
+}
+
+// =============================================================
+// Eventos do teclado, do rato e da janela
+// =============================================================
+
+document.addEventListener("keydown", (evento) => {
+    if (evento.code === "Space") {
+        espacoPremido = true;
+        evento.preventDefault();   // impede a página de deslocar
+    }
+    if (evento.key === "Escape" && modo.tipo === "fio" && modo.inicio !== undefined) {
+        mudarModo({ tipo: "fio", inicio: undefined }, "Fio cancelado.");
+    }
+});
+
+document.addEventListener("keyup", (evento) => {
+    if (evento.code === "Space") {
+        espacoPremido = false;
+    }
+});
+
 // Roda do rato / touchpad: Ctrl (ou pinça) aproxima, sem Ctrl desloca — como no Figma
 zonaPlaca.addEventListener(
     "wheel",
@@ -406,10 +632,15 @@ zonaPlaca.addEventListener("pointerdown", (evento) => {
 });
 
 zonaPlaca.addEventListener("pointermove", (evento) => {
+    // A dica acompanha sempre o rato
+    const caixa = zonaPlaca.getBoundingClientRect();
+    posicaoDoRato = { x: evento.clientX - caixa.left, y: evento.clientY - caixa.top };
+    posicionarDica();
+
     if (arrasto === undefined) {
         return;
     }
-    const escala = vista.largura / zonaPlaca.getBoundingClientRect().width;
+    const escala = vista.largura / caixa.width;
     vista = deslocar(vista, ajustada, (arrasto.x - evento.clientX) * escala, (arrasto.y - evento.clientY) * escala);
     arrasto = { x: evento.clientX, y: evento.clientY };
     houveArrasto = true;
@@ -433,19 +664,6 @@ zonaPlaca.addEventListener(
     true,
 );
 
-document.addEventListener("keydown", (evento) => {
-    if (evento.code === "Space") {
-        espacoPremido = true;
-        evento.preventDefault();   // impede a página de deslocar
-    }
-});
-
-document.addEventListener("keyup", (evento) => {
-    if (evento.code === "Space") {
-        espacoPremido = false;
-    }
-});
-
 // Quando a zona da placa muda de tamanho (janela, avisos a aparecer…), mantém o zoom
 new ResizeObserver(() => {
     const novaAjustada = vistaAjustada(proporcaoDaZona());
@@ -453,36 +671,5 @@ new ResizeObserver(() => {
     ajustada = novaAjustada;
     aplicarVista();
 }).observe(zonaPlaca);
-
-// Redesenha só a camada de destaque, sem tocar no resto da placa
-function atualizarDestaque(): void {
-    const svg = zonaPlaca.querySelector("svg");
-    if (svg === null) {
-        return;
-    }
-
-    if (modo.tipo === "chip") {
-        desenharSombraDoChip(svg, sombraDoChip(modo.nome));
-        return;
-    }
-
-    const destacar = modo.tipo === "prova" || modo.tipo === "fio";
-    desenharDestaqueDoNo(svg, circuito, destacar ? furoSobRato : undefined, modo.tipo === "prova");
-}
-
-// Onde ficaria o chip escolhido, se o rato estiver num furo das linhas A a J
-function sombraDoChip(nome: string): SombraDoChip | undefined {
-    if (furoSobRato === undefined) {
-        return undefined;
-    }
-    try {
-        const { placa, coluna } = posicaoParaChip(furoSobRato);
-        return { nome, placa, coluna, avaliacao: circuito.avaliarMontagem(placa, coluna) };
-    } catch {
-        return undefined;   // o rato está num barramento ou num terminal: sem sombra
-    }
-}
-
-atualizarDestaque();
 
 atualizar();

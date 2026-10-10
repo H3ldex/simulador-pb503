@@ -29,6 +29,10 @@ export interface AcoesDaPlaca {
     aoClicarChip(indice: number): void;
     aoEntrarNoFuro(furo: string): void;
     aoSairDoFuro(): void;
+    aoEntrarNoFio(indice: number): void;
+    aoSairDoFio(): void;
+    aoEntrarNoChip(indice: number): void;
+    aoSairDoChip(): void;
 }
 
 // O que é preciso para desenhar a sombra de um chip
@@ -156,7 +160,8 @@ function desenharChips(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca)
         const r = retanguloDoChip(chip.placa, chip.colunaPino1);
         const grupo = criar("g", { class: "chip" });
         grupo.addEventListener("click", () => acoes.aoClicarChip(indice));
-        grupo.append(criar("title", {}, `${chip.nome}: pino 1 na breadboard ${chip.placa}, coluna ${chip.colunaPino1}`));
+        grupo.addEventListener("mouseenter", () => acoes.aoEntrarNoChip(indice));
+        grupo.addEventListener("mouseleave", () => acoes.aoSairDoChip());
 
         // Pernas: do furo de cada pino até ao corpo
         for (const pino of TODOS_OS_PINOS) {
@@ -203,7 +208,8 @@ function desenharFios(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca):
 
         const grupo = criar("g", { class: "fio" });
         grupo.addEventListener("click", () => acoes.aoClicarFio(indice));
-        grupo.append(criar("title", {}, `${fio.de} ↔ ${fio.para}`));
+        grupo.addEventListener("mouseenter", () => acoes.aoEntrarNoFio(indice));
+        grupo.addEventListener("mouseleave", () => acoes.aoSairDoFio());
         grupo.append(criar("path", {
             d: `M ${a.x} ${a.y} Q ${controlo.x} ${controlo.y} ${b.x} ${b.y}`,
             stroke: cor,
