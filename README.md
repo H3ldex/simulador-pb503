@@ -38,7 +38,7 @@ Sou estudante de Engenharia Informática no ISCTE e, na cadeira de Fundamentos d
 - **Ligar a teoria à prática.** Ao programar a placa, tive de pensar em perguntas que nas aulas passam despercebidas: o que acontece a uma entrada solta num chip TTL? Porque é que um chip sem alimentação não faz nada? O que é, exatamente, um curto-circuito? O simulador responde a estas perguntas com o mesmo rigor que a placa real.
 - **Criar uma ferramenta útil para estudar.** Poder montar e testar os circuitos dos laboratórios em casa, antes da aula, e perceber os erros de montagem mais comuns.
 
-O projeto está todo **em português** (código, testes e documentação), porque o quero apresentar na faculdade e porque deixa claro que o raciocínio por trás de cada decisão é meu.
+O projeto está todo **em português** (código, testes e documentação).
 
 ---
 
