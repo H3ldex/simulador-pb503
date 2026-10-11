@@ -1,5 +1,5 @@
 import { Circuito } from "../circuito";
-import { furoDoInterruptor, furoDoLed } from "../BaseMontagem";
+import { furoDoInterruptor, furoDoLed } from "../baseMontagem";
 import { furoDoPino } from "../montagem";
 import { criar74LS08 } from "../chips/catalogo74LS";
 import type { NumeroPino } from "../pinos";

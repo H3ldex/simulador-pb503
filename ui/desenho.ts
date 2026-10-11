@@ -1,5 +1,5 @@
 import type { AvaliacaoDeMontagem, Circuito, Fio } from "../src/circuito";
-import { FILAS_ALIMENTACAO, NUMERO_DE_BREADBOARDS, NUMERO_DE_LEDS, furoDoLed } from "../src/BaseMontagem";
+import { FILAS_ALIMENTACAO, NUMERO_DE_BREADBOARDS, NUMERO_DE_LEDS, furoDoLed } from "../src/baseMontagem";
 import { furoDoPino } from "../src/montagem";
 import { TODOS_OS_PINOS } from "../src/pinos";
 import type { NumeroInterruptor } from "../src/pb503/interruptores";

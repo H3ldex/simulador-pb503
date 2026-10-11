@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { Circuito } from "../src/circuito";
-import { furoDoInterruptor, furoDoLed } from "../src/BaseMontagem";
+import { furoDoInterruptor, furoDoLed } from "../src/baseMontagem";
 import { furoDoPino } from "../src/montagem";
 import { criar74LS04, criar74LS08 } from "../src/chips/catalogo74LS";
 import type { NumeroPino } from "../src/pinos";

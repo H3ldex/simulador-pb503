@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { furoDoPino, furosDoChip } from "../src/montagem";
-import { BaseMontagem } from "../src/BaseMontagem";
+import { baseMontagem } from "../src/baseMontagem";
 import type { NumeroPino } from "../src/pinos";
 
 describe("furoDoPino", () => {
@@ -50,14 +50,14 @@ describe("furosDoChip", () => {
     });
 
     it("todos os furos existem na base de montagem", () => {
-        const base = new BaseMontagem();
+        const base = new baseMontagem();
         for (const furo of furosDoChip(2, 30).values()) {
             expect(base.existeFuro(furo)).toBe(true);
         }
     });
 
     it("cada pino fica num nó elétrico diferente (o canal separa os dois lados)", () => {
-        const base = new BaseMontagem();
+        const base = new baseMontagem();
         const nos = new Set<string>();
         for (const furo of furosDoChip(1, 10).values()) {
             nos.add(base.noDoFuro(furo));

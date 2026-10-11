@@ -3,7 +3,7 @@ import {
     FILAS_ALIMENTACAO,
     FUROS_POR_FILA_DE_BARRAMENTO,
     NUMERO_DE_BREADBOARDS,
-} from "../src/BaseMontagem";
+} from "../src/baseMontagem";
 import { furoDoPino } from "../src/montagem";
 
 // Posições no desenho, em unidades do viewBox do SVG.

@@ -1,4 +1,4 @@
-import { NUMERO_DE_LEDS,BaseMontagem, furoDoInterruptor, furoDoLed } from "./BaseMontagem";
+import { NUMERO_DE_LEDS,baseMontagem, furoDoInterruptor, furoDoLed } from "./baseMontagem";
 import { calcularFuroDoPino, furosDoChip } from "./montagem";
 import { TODOS_OS_PINOS, type NumeroPino } from "./pinos";
 import type { ValorLogico } from "./valorLogico";
@@ -70,9 +70,9 @@ const FILAS: FilaAlimentacao[] = ["+5V", "+V", "-V", "0V"];
 const INTERRUPTORES: NumeroInterruptor[] = [1, 2, 3, 4, 5, 6, 7, 8];
 
 export class Circuito {
-    private montagem = new BaseMontagem();
+    private montagem = new baseMontagem();
 
-    get base(): BaseMontagem {
+    get base(): baseMontagem {
         return this.montagem;
     }
     readonly fonte = new FonteAlimentacao();
@@ -166,7 +166,7 @@ export class Circuito {
     // O union-find não sabe desfazer ligações: recomeça com uma base nova
     // e volta a ligar os fios que restam
     private reconstruirLigacoes(): void {
-        this.montagem = new BaseMontagem();
+        this.montagem = new baseMontagem();
         for (const fio of this.fios) {
             this.montagem.ligarFio(fio.de, fio.para);
         }

@@ -40,7 +40,7 @@ function intervalo(inicio: number, fim: number): number[] {
     return numeros;
 }
 
-export class BaseMontagem {
+export class baseMontagem {
     private readonly furos = new Set<string>();
     private readonly ligacoes = new UnionFind();
 

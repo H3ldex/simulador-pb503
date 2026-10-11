@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
 
-import { BaseMontagem } from "../src/BaseMontagem";
+import { baseMontagem } from "../src/baseMontagem";
 import { ALTURA, LARGURA, PASSO, posicaoDoFuro, retanguloDoChip } from "../ui/layout";
 
 describe("layout", () => {
     it("todos os furos da base têm posição, e nenhuma se repete", () => {
-        const base = new BaseMontagem();
+        const base = new baseMontagem();
         const pontos = new Set<string>();
         for (const furo of base.listarFuros()) {
             const p = posicaoDoFuro(furo);
@@ -15,7 +15,7 @@ describe("layout", () => {
     });
 
     it("todos os furos cabem dentro do desenho", () => {
-        const base = new BaseMontagem();
+        const base = new baseMontagem();
         for (const furo of base.listarFuros()) {
             const p = posicaoDoFuro(furo);
             expect(p.x).toBeGreaterThan(0);
