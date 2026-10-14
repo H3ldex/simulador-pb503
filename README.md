@@ -5,6 +5,8 @@
 
 Monta circuitos integrados da série 74LS, liga fios, mexe nos interruptores e vê o resultado nos LEDs, tudo no browser, tal como na placa real do laboratório.
 
+**Experimenta online:** [simulador-pb503.vercel.app](https://simulador-pb503.vercel.app)
+
 ---
 
 ## Índice
@@ -25,8 +27,9 @@ Monta circuitos integrados da série 74LS, liga fios, mexe nos interruptores e v
 14. [Decisões de desenho](#decisões-de-desenho)
 15. [Convenções do projeto](#convenções-do-projeto)
 16. [Limitações conhecidas](#limitações-conhecidas)
-17. [Autor e contactos](#autor-e-contactos)
-18. [Aviso legal](#aviso-legal)
+17. [Registo de alterações](#registo-de-alterações)
+18. [Autor e contactos](#autor-e-contactos)
+19. [Aviso legal](#aviso-legal)
 
 ---
 
@@ -62,7 +65,7 @@ O comportamento do simulador está verificado por mais de 200 testes unitários 
 - **Interruptores lógicos S1–S8** e **8 pares de LEDs** (vermelho = 1, verde = 0, apagado = sem valor).
 - Interruptor geral **POWER**.
 
-**Circuitos integrados** (série 74LS, encapsulamento DIP-14)
+**Circuitos integrados** (série 74LS, encapsulamentos DIP-14 e DIP-16)
 
 | Chip | Função |
 |---|---|
@@ -72,6 +75,7 @@ O comportamento do simulador está verificado por mais de 200 testes unitários 
 | 74LS08 | 4 portas AND de 2 entradas |
 | 74LS32 | 4 portas OR de 2 entradas |
 | 74LS86 | 4 portas XOR de 2 entradas |
+| 74LS153 | 2 multiplexadores 4:1 com seleção comum (DIP-16) |
 
 **Simulação**
 - Lógica de **três estados** (0, 1 e Z) e comportamento **TTL** (entrada solta lida como 1).
@@ -86,6 +90,7 @@ O comportamento do simulador está verificado por mais de 200 testes unitários 
 - **Dicas** em português claro sobre furos, fios e chips (incluindo o diagnóstico da alimentação dos chips).
 - **Zoom e deslocamento** ao estilo do Figma.
 - Exemplo pronto a carregar: **Laboratório 1**.
+- Página inicial com uma **faixa de novidades** que mostra as últimas atualizações do simulador.
 
 ---
 
@@ -140,8 +145,8 @@ Também podes carregar o circuito pronto em **Exemplos → Lab 1**.
 ### Instalar
 
 ```bash
-git clone https://github.com/H3ldex/<nome-do-repositório>.git
-cd <nome-do-repositório>
+git clone https://github.com/H3ldex/simulador-pb503.git
+cd simulador-pb503
 npm install
 ```
 
@@ -163,7 +168,7 @@ npm install
 ## Estrutura do projeto
 
 ```
-├── index.html              Página inicial
+├── index.html              Página inicial (com a faixa de novidades)
 ├── simulador.html          Página do simulador
 ├── vite.config.ts          Configuração do Vite (duas páginas, caminhos relativos)
 ├── tsconfig.json           TypeScript da lógica (sem DOM)
@@ -174,12 +179,13 @@ npm install
 │   ├── valorLogico.ts      Tipo ValorLogico (0, 1, Z)
 │   ├── portas.ts           NOT, AND, OR, NAND, NOR, XOR
 │   ├── ttl.ts              Leitura de entradas TTL (solta = 1)
-│   ├── pinos.ts            Números dos pinos de um DIP-14, VCC e GND
+│   ├── pinos.ts            Números dos pinos e encapsulamentos (DIP-14 e DIP-16)
 │   ├── chips/
 │   │   ├── comum.ts            Alimentação, leitura TTL e saídas indefinidas
 │   │   ├── chipDuasEntradas.ts Chips com portas de 2 entradas
 │   │   ├── chipUmaEntrada.ts   Chips com portas de 1 entrada (74LS04)
-│   │   └── catalogo74LS.ts     Pinagens e funções criar74LS00…86
+│   │   ├── chipMux153.ts       Multiplexador 4:1 duplo (74LS153)
+│   │   └── catalogo74LS.ts     Pinagens e funções criar74LS…
 │   ├── unionFind.ts        Estrutura union-find (nós elétricos)
 │   ├── baseMontagem.ts     Furos, ligações internas e fios da PB-503
 │   ├── montagem.ts         Em que furo fica cada pino de um chip montado
@@ -198,6 +204,8 @@ npm install
 │   ├── layout.ts           Posição de cada furo e componente (sem DOM, testável)
 │   ├── vista.ts            Contas do zoom e do deslocamento (sem DOM, testável)
 │   ├── icones.ts           Ícones desenhados em SVG
+│   ├── novidades.ts        Registo de novidades e formatação de datas (sem DOM, testável)
+│   ├── inicio.ts           Faixa de novidades da página inicial
 │   ├── tema.css            Cores e base comuns às duas páginas
 │   ├── estilos.css         Estilos do simulador
 │   └── inicio.css          Estilos da página inicial
@@ -220,7 +228,7 @@ Isto permite testar toda a lógica sem browser e, no futuro, trocar a interface 
 flowchart TD
     V["valorLogico.ts<br/>0, 1, Z"] --> P["portas.ts<br/>NOT, AND, OR, NAND, NOR, XOR"]
     V --> T["ttl.ts<br/>entrada solta = 1"]
-    P --> C["chips/<br/>74LS00 … 74LS86"]
+    P --> C["chips/<br/>74LS00 … 74LS86, 74LS153"]
     T --> C
     U["unionFind.ts"] --> B["baseMontagem.ts<br/>furos e nós elétricos"]
     M["montagem.ts<br/>pino → furo"] --> S
@@ -282,7 +290,12 @@ Os sinais usados nos laboratórios são sempre **0 V** ou **+5 V**, por isso o s
 
 ## Os circuitos integrados
 
-Todos os chips são DIP-14, montados a atravessar o canal central da breadboard com a **marca à esquerda**. O pino 1 fica em baixo à esquerda e a numeração segue no sentido contrário ao dos ponteiros do relógio. O **pino 14 é o VCC (+5 V)** e o **pino 7 é o GND (0 V)**.
+Os chips montam-se a atravessar o canal central da breadboard com a **marca à esquerda**. O pino 1 fica em baixo à esquerda e a numeração segue no sentido contrário ao dos ponteiros do relógio. A posição da alimentação depende do **encapsulamento**:
+
+| Encapsulamento | Pinos | VCC (+5 V) | GND (0 V) | Colunas ocupadas | Chips |
+|---|---|---|---|---|---|
+| DIP-14 | 14 | pino 14 | pino 7 | 7 | 74LS00, 02, 04, 08, 32, 86 |
+| DIP-16 | 16 | pino 16 | pino 8 | 8 | 74LS153 |
 
 ```
            14  13  12  11  10   9   8      ← linha E
@@ -292,7 +305,7 @@ Todos os chips são DIP-14, montados a atravessar o canal central da breadboard 
             1   2   3   4   5   6   7      ← linha F
 ```
 
-### Pinagens
+### Pinagens dos chips de portas lógicas (DIP-14)
 
 | Chip | Portas (entradas → saída) |
 |---|---|
@@ -300,11 +313,37 @@ Todos os chips são DIP-14, montados a atravessar o canal central da breadboard 
 | 74LS02 (a saída vem **antes** das entradas) | 2, 3 → 1 · 5, 6 → 4 · 8, 9 → 10 · 11, 12 → 13 |
 | 74LS04 | 1 → 2 · 3 → 4 · 5 → 6 · 9 → 8 · 11 → 10 · 13 → 12 |
 
-Um chip só funciona com o **pino 14 a 1** e o **pino 7 a 0**. Caso contrário, todas as saídas ficam em Z.
+Um chip só funciona com o **VCC a 1** e o **GND a 0** (pinos 14 e 7 num DIP-14; pinos 16 e 8 num DIP-16). Caso contrário, todas as saídas ficam em Z.
+
+### O 74LS153: multiplexador 4:1 duplo
+
+Um multiplexador (MUX) é um seletor: copia para a saída **uma** de quatro entradas de dados, escolhida pelas entradas de seleção S1 e S0. O 74LS153 tem dois MUX (a e b), que **partilham** a seleção.
+
+```
+          16   15   14   13   12   11   10    9
+         VCC   Ēb   S0  I3b  I2b  I1b  I0b   Zb
+        ┌──────────────────────────────────────┐
+        ◖               74LS153                │
+        └──────────────────────────────────────┘
+          Ēa   S1  I3a  I2a  I1a  I0a   Za  GND
+           1    2    3    4    5    6    7    8
+```
+
+| Ē | S1 | S0 | Z |
+|---|---|---|---|
+| 1 | X | X | 0 |
+| 0 | 0 | 0 | I0 |
+| 0 | 0 | 1 | I1 |
+| 0 | 1 | 0 | I2 |
+| 0 | 1 | 1 | I3 |
+
+O **Ē** (*enable*) é **ativo a baixo**: o MUX só funciona com Ē = 0. Atenção à armadilha TTL: um Ē **esquecido** (solto) é lido como 1, e a saída fica sempre a 0.
 
 ### Como os chips estão feitos
 
 Cada chip é descrito por **dados**: a pinagem e a função da porta. Por exemplo, o 74LS08 é um `ChipDuasEntradas` com a pinagem padrão e a função `portaAND`. Acrescentar um chip novo da série 74 é, na maior parte dos casos, uma pinagem e três linhas de código.
+
+Chips com uma lógica diferente, como o 74LS153, têm uma classe própria. Basta respeitarem o contrato `ChipLogico` (nome, encapsulamento, `calcularSaidas` e `descreverPino`) para o motor, a montagem, o desenho e as dicas funcionarem com eles sem alterações.
 
 ---
 
@@ -386,13 +425,15 @@ O projeto tem **mais de 200 testes unitários** (Vitest). As tabelas de verdade 
 | `portas.test.ts` | As 6 portas, de forma **exaustiva** (todas as combinações de 0, 1 e Z) |
 | `ttl.test.ts` | Leitura de entradas TTL |
 | `chip74LS08.test.ts` | Alimentação, comportamento TTL e ligações das 4 portas |
-| `catalogo74LS.test.ts` | Os 6 chips contra as tabelas de verdade, pinagens e descrição dos pinos |
+| `catalogo74LS.test.ts` | Os 6 chips de portas contra as tabelas de verdade, pinagens e descrição dos pinos |
+| `chipMux153.test.ts` | O 74LS153: alimentação em DIP-16, as 4 seleções dos dois multiplexadores e o enable |
 | `unionFind.test.ts` | Propriedades do union-find (simetria, transitividade…) |
 | `baseMontagem.test.ts` | Ligações internas, fios, terminais e nós da PB-503 |
-| `montagem.test.ts` | Posição dos pinos de um chip montado |
+| `montagem.test.ts` | Posição dos pinos de um chip montado, em DIP-14 e DIP-16 |
 | `fonte.test.ts`, `interruptores.test.ts`, `indicadores.test.ts` | Componentes da PB-503 |
-| `circuito.test.ts` | O motor: Laboratório 1 completo, erros de montagem, curtos, oscilações, remover e avaliar montagens |
+| `circuito.test.ts` | O motor: Laboratório 1 completo, 74LS153 montado na placa, erros de montagem, curtos, oscilações, remover e avaliar montagens |
 | `descricao.test.ts` | Descrições em português |
+| `novidades.test.ts` | Formatação das datas e ordem do registo de novidades |
 | `layout.test.ts`, `vista.test.ts` | Posições no desenho e contas do zoom |
 
 O teste mais importante é a **tabela de verdade do Laboratório 1**: o circuito do enunciado é montado em código e verificado nas 8 combinações dos interruptores.
@@ -401,12 +442,13 @@ O teste mais importante é a **tabela de verdade do Laboratório 1**: o circuito
 
 ## Decisões de desenho
 
-- **TypeScript em vez de JavaScript.** Os tipos apanham erros antes de o programa correr: um valor lógico só pode ser 0, 1 ou Z, e um número de pino só pode ir de 1 a 14.
+- **TypeScript em vez de JavaScript.** Os tipos apanham erros antes de o programa correr: um valor lógico só pode ser 0, 1 ou Z, e um número de pino só pode ir de 1 a 16.
 - **Três estados desde o início.** Sem o Z, não seria possível representar fios soltos, chips sem alimentação nem o comportamento TTL.
 - **Valores lógicos em vez de tensões.** Nos laboratórios, todos os sinais são 0 V ou 5 V, por isso uma tensão e um valor lógico dizem a mesma coisa.
 - **Funções partilhadas em vez de herança** nos chips. A lógica comum (alimentação, leitura TTL) está em funções, e os chips são configurados com dados.
 - **Union-find** para os nós elétricos: rápido a juntar grupos e a responder "estes dois pontos estão ligados?".
 - **Simulação por ponto fixo**: a mesma abordagem dos simuladores digitais, capaz de detetar circuitos que não estabilizam.
+- **Encapsulamentos explícitos.** No início, o código assumia que todos os chips tinham 14 pinos. Com o 74LS153 (16 pinos), esse pressuposto escondido passou a ser explícito: cada chip diz qual é o seu encapsulamento, e as funções de montagem e desenho recebem o número de pinos, com 14 por defeito para não partir o código existente.
 - **A placa real como referência.** A geometria segue o enunciado do Laboratório 1 e o número oficial de pontos de ligação.
 
 ---
@@ -425,7 +467,7 @@ O teste mais importante é a **tabela de verdade do Laboratório 1**: o circuito
 Esta é uma **versão beta**:
 
 - Os circuitos **não são guardados**: ao fechar a página, a montagem perde-se.
-- Só estão disponíveis os **6 chips** usados nos primeiros laboratórios.
+- Estão disponíveis **7 chips**: as 6 portas lógicas dos primeiros laboratórios e o multiplexador 74LS153.
 - Ainda não há **pulsers** (PB1/PB2) nem a saída TTL do **gerador de funções**, necessários para circuitos sequenciais.
 - As filas **+V** e **−V** e os seletores **+5/+V** e **TTL/CMOS** são apenas visuais.
 - A geometria assume **64 colunas** por breadboard e filas de barramento **divididas a meio**, de acordo com o enunciado e as especificações da placa.
@@ -433,6 +475,16 @@ Esta é uma **versão beta**:
 
 ---
 
+## Registo de alterações
+
+As novidades são mantidas em `ui/novidades.ts` (da mais recente para a mais antiga) e aparecem automaticamente na faixa da página inicial.
+
+| Data | Novidade |
+|---|---|
+| 14 de outubro de 2026 | **Novo chip: 74LS153.** Multiplexador 4:1 duplo, o primeiro chip com encapsulamento DIP-16. |
+| 10 de outubro de 2026 | **Versão beta.** Primeira versão pública do simulador, com os chips 74LS00, 02, 04, 08, 32 e 86. |
+
+---
 
 ## Autor e contactos
 

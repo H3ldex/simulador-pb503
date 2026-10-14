@@ -261,3 +261,6 @@ body {
     text-decoration: none;
 }
 .voltar:hover { color: var(--texto); }
+
+.marca { display: flex; align-items: center; gap: 10px; }
+.marca img { border-radius: 7px; }

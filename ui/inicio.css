@@ -261,3 +261,8 @@
 @media (prefers-reduced-motion: reduce) {
     .faixa-conteudo { animation: none; }
 }
+
+.logo {
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
