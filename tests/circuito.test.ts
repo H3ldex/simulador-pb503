@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { Circuito } from "../src/circuito";
 import { furoDoInterruptor, furoDoLed } from "../src/baseMontagem";
 import { furoDoPino } from "../src/montagem";
-import { criar74LS04, criar74LS08 } from "../src/chips/catalogo74LS";
+import { criar74LS04, criar74LS08, criar74LS153 } from "../src/chips/catalogo74LS";
 import type { NumeroPino} from "../src/pinos";
 import type { EstadoLed } from "../src/pb503/indicadores";
 import { montarLab1 } from "../src/exemplos/lab1";
@@ -213,6 +213,35 @@ describe("Circuito — erros de montagem do enunciado", () => {
     
         it("uma coluna vazia não tem nada ligado", () => {
             expect(new Circuito().ligacoesDoFuro("P2:A:30")).toEqual([]);
+        });
+    });
+
+    describe("Circuito — 74LS153 montado na placa", () => {
+        it("S1 e S0 escolhem a entrada I2a, cujo valor vai para o LED 1", () => {
+            const circuito = new Circuito();
+            circuito.montarChip(criar74LS153(), 1, 10);
+            const pino = (n: NumeroPino): string => furoDoPino(1, 10, n, 16);
+    
+            circuito.ligarFio(pino(16), "ALIM:+5V:1");          // VCC
+            circuito.ligarFio(pino(8), "ALIM:0V:1");            // GND
+            circuito.ligarFio(pino(1), "ALIM:0V:2");            // Ēa = 0 (MUX a ligado)
+            circuito.ligarFio(furoDoInterruptor(1), pino(2));   // S1
+            circuito.ligarFio(furoDoInterruptor(2), pino(14));  // S0
+            circuito.ligarFio(furoDoInterruptor(3), pino(4));   // I2a
+            circuito.ligarFio(pino(7), furoDoLed(1));           // Za
+            circuito.fonte.ligar();
+    
+            // S1 = 1, S0 = 0 → escolhe I2a
+            circuito.interruptores.colocar(1, true);
+            circuito.interruptores.colocar(2, false);
+    
+            circuito.interruptores.colocar(3, true);
+            circuito.simular();
+            expect(circuito.estadoDoLed(1)).toBe("vermelho");
+    
+            circuito.interruptores.colocar(3, false);
+            circuito.simular();
+            expect(circuito.estadoDoLed(1)).toBe("verde");
         });
     });
 });

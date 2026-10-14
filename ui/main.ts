@@ -1,7 +1,7 @@
 import { Circuito, type ChipLogico } from "../src/circuito";
 import { montarLab1 } from "../src/exemplos/lab1";
 import {
-    criar74LS00, criar74LS02, criar74LS04, criar74LS08, criar74LS32, criar74LS86,
+    criar74LS00, criar74LS02, criar74LS04, criar74LS08, criar74LS32, criar74LS86, criar74LS153,
 } from "../src/chips/catalogo74LS";
 import { descreverLocal, descreverValor } from "../src/descricao";
 import { furoDoPino } from "../src/montagem";
@@ -52,6 +52,7 @@ const CATALOGO: { nome: string; porta: string; detalhe: string; icone: NomeIcone
     { nome: "74LS08", porta: "AND",  detalhe: "4 portas de 2 entradas", icone: "and",  criar: criar74LS08 },
     { nome: "74LS32", porta: "OR",   detalhe: "4 portas de 2 entradas", icone: "or",   criar: criar74LS32 },
     { nome: "74LS86", porta: "XOR",  detalhe: "4 portas de 2 entradas", icone: "xor",  criar: criar74LS86 },
+    { nome: "74LS153", porta: "MUX 4:1", detalhe: "2 multiplexadores de 4 entradas", icone: "mux", criar: criar74LS153 },
 ];
 
 const EXEMPLOS: { nome: string; detalhe: string; carregar: () => Circuito }[] = [

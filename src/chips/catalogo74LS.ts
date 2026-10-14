@@ -1,6 +1,7 @@
 import { portaAND, portaNAND, portaNOR, portaNOT, portaOR, portaXOR } from "../portas";
 import { ChipDuasEntradas, type PortaDuasEntradas } from "./chipDuasEntradas";
 import { ChipUmaEntrada, type PortaUmaEntrada } from "./chipUmaEntrada";
+import { ChipMux153 } from "./chipMux153";
 
 // Pinagem comum aos 74LS00, 74LS08, 74LS32 e 74LS86
 const PINAGEM_QUADRUPLA_PADRAO: readonly PortaDuasEntradas[] = [
@@ -50,4 +51,8 @@ export function criar74LS32(): ChipDuasEntradas {
 
 export function criar74LS86(): ChipDuasEntradas {
     return new ChipDuasEntradas("74LS86", PINAGEM_QUADRUPLA_PADRAO, portaXOR);
+}
+
+export function criar74LS153(): ChipMux153 {
+    return new ChipMux153();
 }

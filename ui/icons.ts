@@ -28,6 +28,7 @@ export const ICONES = {
     nor: icone(ENTRADAS + CORPO_OR + SAIDA_NEGADA),
     xor: icone(ENTRADAS + CORPO_OR + `<path d="M3 5c2 4 2 10 0 14"/>` + SAIDA),
     not: icone(`<path d="M2 12h4M6 6l10 6-10 6z"/><circle cx="17.5" cy="12" r="1.5"/><path d="M19 12h3"/>`),
+    mux: icone(`<path d="M7 4l10 4v8l-10 4z"/><path d="M2 7h5M2 10.5h5M2 13.5h5M2 17h5M17 12h5M12 18v4"/>`),
 
     // Indicações
     info: icone(`<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>`),
