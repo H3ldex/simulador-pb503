@@ -144,3 +144,120 @@
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+
+/* --- Última atualização --- */
+.atualizacao {
+    margin-top: 12px;
+    width: 100%;
+    max-width: 460px;
+    padding: 14px 18px;
+    background: var(--painel);
+    border: 1px solid var(--borda);
+    border-left: 4px solid var(--verde);
+    border-radius: 10px;
+    text-align: left;
+}
+.atualizacao[hidden] { display: none; }
+
+.atualizacao-cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.atualizacao-etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--verde);
+}
+.atualizacao-etiqueta::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--verde);
+    box-shadow: 0 0 6px var(--verde);
+}
+
+.atualizacao time { font-size: 0.8rem; color: var(--texto-suave); }
+.atualizacao strong { display: block; font-size: 0.98rem; }
+.atualizacao p { margin: 4px 0 0; font-size: 0.88rem; line-height: 1.5; color: var(--texto-suave); }
+
+
+/* --- Faixa de novidades --- */
+.faixa-novidades {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: stretch;
+    background: var(--painel);
+    border-bottom: 1px solid var(--borda);
+    font-size: 0.85rem;
+}
+.faixa-novidades[hidden] { display: none; }
+
+.faixa-etiqueta {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-right: 1px solid var(--borda);
+    color: var(--verde);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+.faixa-etiqueta::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--verde);
+    box-shadow: 0 0 6px var(--verde);
+}
+
+.faixa-janela {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    /* As pontas desvanecem, para o texto não aparecer e desaparecer de repente */
+    mask-image: linear-gradient(to right, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+}
+
+.faixa-conteudo {
+    display: flex;
+    width: max-content;
+    animation: faixa-deslizar 30s linear infinite;
+}
+.faixa-novidades:hover .faixa-conteudo { animation-play-state: paused; }
+
+.faixa-grupo { display: flex; flex-shrink: 0; }
+
+.faixa-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 32px;
+    white-space: nowrap;
+    color: var(--texto-suave);
+}
+.faixa-item time { color: var(--verde); font-weight: 600; }
+.faixa-item strong { color: var(--texto); }
+
+@keyframes faixa-deslizar {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+/* Quem pediu ao sistema menos animações vê a faixa parada */
+@media (prefers-reduced-motion: reduce) {
+    .faixa-conteudo { animation: none; }
+}
