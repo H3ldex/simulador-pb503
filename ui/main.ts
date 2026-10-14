@@ -366,7 +366,7 @@ function atualizarDestaque(): void {
     }
 
     if (modo.tipo === "chip") {
-        desenharSombraDoChip(svg, sombraDoChip(modo.nome));
+        desenharSombraDoChip(svg, sombraDoChip(modo.nome, modo.criar().encapsulamento.totalPinos));
         return;
     }
 
@@ -375,15 +375,15 @@ function atualizarDestaque(): void {
 }
 
 // Onde ficaria o chip escolhido, se o rato estiver num furo das linhas A a J
-function sombraDoChip(nome: string): SombraDoChip | undefined {
+function sombraDoChip(nome: string, totalPinos: 14 | 16): SombraDoChip | undefined {
     if (furoSobRato === undefined) {
         return undefined;
     }
     try {
         const { placa, coluna } = posicaoParaChip(furoSobRato);
-        return { nome, placa, coluna, avaliacao: circuito.avaliarMontagem(placa, coluna) };
+        return { nome, placa, coluna, totalPinos, avaliacao: circuito.avaliarMontagem(placa, coluna, totalPinos) };
     } catch {
-        return undefined;   // o rato está num barramento ou num terminal: sem sombra
+        return undefined;
     }
 }
 
@@ -424,14 +424,16 @@ function conteudoDoChip(indice: number): ConteudoDaDica | undefined {
         return undefined;
     }
     const item = CATALOGO.find((entrada) => entrada.nome === chip.nome);
-    const vcc = circuito.valorNoFuro(furoDoPino(chip.placa, chip.colunaPino1, 14));
-    const gnd = circuito.valorNoFuro(furoDoPino(chip.placa, chip.colunaPino1, 7));
+    const { totalPinos, vcc: pinoVcc, gnd: pinoGnd } = chip.encapsulamento;
+    const vcc = circuito.valorNoFuro(furoDoPino(chip.placa, chip.colunaPino1, pinoVcc, totalPinos));
+    const gnd = circuito.valorNoFuro(furoDoPino(chip.placa, chip.colunaPino1, pinoGnd, totalPinos));
+
 
     const linhas: string[] = [];
     if (item !== undefined) {
         linhas.push(item.detalhe);
     }
-    linhas.push(`Pino 1 na breadboard ${chip.placa}, coluna ${chip.colunaPino1}`);
+    linhas.push(`Sem alimentação: liga o pino ${pinoVcc} a +5 V e o pino ${pinoGnd} a 0 V.`);
 
     if (!circuito.fonte.estaLigada()) {
         linhas.push("Base desligada: liga o POWER.");

@@ -1,5 +1,5 @@
 import { lerEntradaTTL } from "../ttl";
-import { PINO_GND, PINO_VCC, type NumeroPino } from "../pinos";
+import { DIP14, type Encapsulamento, type NumeroPino } from "../pinos";
 import type { ValorLogico } from "../valorLogico";
 
 // O que está ligado a cada pino de um chip (pino ausente = solto)
@@ -10,9 +10,9 @@ function lerPino(pinos: EstadoPinos, numero: NumeroPino): ValorLogico {
     return pinos.get(numero) ?? "Z";
 }
 
-// Um chip DIP-14 está alimentado com VCC (14) a 1 e GND (7) a 0
-export function verificarAlimentacao(pinos: EstadoPinos): boolean {
-    return lerPino(pinos, PINO_VCC) === 1 && lerPino(pinos, PINO_GND) === 0;
+// Um chip está alimentado com VCC a 1 e GND a 0 (os pinos dependem do encapsulamento)
+export function verificarAlimentacao(pinos: EstadoPinos, encapsulamento: Encapsulamento = DIP14): boolean {
+    return lerPino(pinos, encapsulamento.vcc) === 1 && lerPino(pinos, encapsulamento.gnd) === 0;
 }
 
 // Lê uma entrada como um chip TTL: solto = 1

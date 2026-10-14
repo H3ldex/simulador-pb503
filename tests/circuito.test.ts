@@ -4,9 +4,10 @@ import { Circuito } from "../src/circuito";
 import { furoDoInterruptor, furoDoLed } from "../src/baseMontagem";
 import { furoDoPino } from "../src/montagem";
 import { criar74LS04, criar74LS08 } from "../src/chips/catalogo74LS";
-import type { NumeroPino } from "../src/pinos";
+import type { NumeroPino} from "../src/pinos";
 import type { EstadoLed } from "../src/pb503/indicadores";
 import { montarLab1 } from "../src/exemplos/lab1";
+import { DIP14 } from "../src/pinos";
 
 describe("Circuito — Lab 1 (F = A2 · A0 · A1)", () => {
     // S1, S2, S3 em cima?  →  LED 1
@@ -107,7 +108,9 @@ describe("Circuito — erros de montagem do enunciado", () => {
         });
     
         it("lista os chips montados com a sua posição", () => {
-            expect(montarLab1().listarChips()).toEqual([{ nome: "74LS08", placa: 1, colunaPino1: 10 }]);
+            expect(montarLab1().listarChips()).toEqual([
+                { nome: "74LS08", placa: 1, colunaPino1: 10, encapsulamento: DIP14 },
+            ]);
         });
     });
 

@@ -1,5 +1,5 @@
 import { lerEntrada, saidasIndefinidas, verificarAlimentacao, type EstadoPinos } from "./comum";
-import { PINO_GND, PINO_VCC, type NumeroPino } from "../pinos";
+import { DIP14, PINO_GND, PINO_VCC, type NumeroPino, type Encapsulamento} from "../pinos";
 import type { ValorLogico } from "../valorLogico";
 
 export interface PortaDuasEntradas {
@@ -12,6 +12,7 @@ export type FuncaoDuasEntradas = (a: ValorLogico, b: ValorLogico) => ValorLogico
 
 export class ChipDuasEntradas {
     readonly nome: string;
+    readonly encapsulamento: Encapsulamento = DIP14;
     private readonly portas: readonly PortaDuasEntradas[];
     private readonly funcao: FuncaoDuasEntradas;
 

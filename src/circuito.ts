@@ -1,6 +1,6 @@
 import { NUMERO_DE_LEDS,baseMontagem, furoDoInterruptor, furoDoLed } from "./baseMontagem";
 import { calcularFuroDoPino, furosDoChip } from "./montagem";
-import { TODOS_OS_PINOS, type NumeroPino } from "./pinos";
+import { listaDePinos, type Encapsulamento, type NumeroPino } from "./pinos";
 import type { ValorLogico } from "./valorLogico";
 import type { EstadoPinos } from "./chips/comum";
 import { FonteAlimentacao, type FilaAlimentacao } from "./pb503/fonte";
@@ -10,7 +10,9 @@ import { IndicadoresLogicos, type EstadoLed } from "./pb503/indicadores";
 // Qualquer objeto com nome e calcularSaidas serve como chip (tipagem estrutural)
 export interface ChipLogico {
     readonly nome: string;
+    readonly encapsulamento: Encapsulamento;
     calcularSaidas(pinos: EstadoPinos): EstadoPinos;
+    descreverPino(pino: NumeroPino): string;
 }
 
 // Dois ou mais condutores a forçar valores diferentes no mesmo nó
@@ -36,6 +38,7 @@ export interface InfoChip {
     nome: string;
     placa: number;
     colunaPino1: number;
+    encapsulamento: Encapsulamento;
 }
 
 // Um condutor a tentar forçar um valor num nó
@@ -87,7 +90,7 @@ export class Circuito {
     // --- Montagem ---
 
     montarChip(chip: ChipLogico, placa: number, colunaPino1: number): void {
-        const furos = furosDoChip(placa, colunaPino1);
+        const furos = furosDoChip(placa, colunaPino1, chip.encapsulamento.totalPinos);
         for (const furo of furos.values()) {
             if (this.furosOcupados.has(furo)) {
                 throw new Error(`O furo "${furo}" já está ocupado por outro chip.`);
@@ -100,13 +103,13 @@ export class Circuito {
     }
 
         // Diz se é possível montar um chip nesta posição, sem o montar
-        avaliarMontagem(placa: number, colunaPino1: number): AvaliacaoDeMontagem {
+        avaliarMontagem(placa: number, colunaPino1: number, totalPinos: 14 | 16 = 14): AvaliacaoDeMontagem {
             const furos: { furo: string; livre: boolean }[] = [];
             let todosExistem = true;
             let algumOcupado = false;
     
-            for (const pino of TODOS_OS_PINOS) {
-                const furo = calcularFuroDoPino(placa, colunaPino1, pino);
+            for (const pino of listaDePinos(totalPinos)) {
+                const furo = calcularFuroDoPino(placa, colunaPino1, pino, totalPinos);
                 if (!this.base.existeFuro(furo)) {
                     todosExistem = false;
                     continue;
@@ -141,6 +144,7 @@ export class Circuito {
             nome: montado.chip.nome,
             placa: montado.placa,
             colunaPino1: montado.colunaPino1,
+            encapsulamento: montado.chip.encapsulamento,
         }));
     }
 

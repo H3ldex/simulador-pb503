@@ -1,7 +1,7 @@
 import type { AvaliacaoDeMontagem, Circuito, Fio } from "../src/circuito";
 import { FILAS_ALIMENTACAO, NUMERO_DE_BREADBOARDS, NUMERO_DE_LEDS, furoDoLed } from "../src/baseMontagem";
 import { furoDoPino } from "../src/montagem";
-import { TODOS_OS_PINOS } from "../src/pinos";
+import { listaDePinos } from "../src/pinos";
 import type { NumeroInterruptor } from "../src/pb503/interruptores";
 import {
     ALTURA,
@@ -41,6 +41,7 @@ export interface SombraDoChip {
     placa: number;
     coluna: number;
     avaliacao: AvaliacaoDeMontagem;
+    totalPinos: 14 | 16;
 }
 
 // --- Auxiliares ---
@@ -157,16 +158,17 @@ function desenharInterruptores(svg: SVGElement, circuito: Circuito, acoes: Acoes
 
 function desenharChips(svg: SVGElement, circuito: Circuito, acoes: AcoesDaPlaca): void {
     circuito.listarChips().forEach((chip, indice) => {
-        const r = retanguloDoChip(chip.placa, chip.colunaPino1);
+        const total = chip.encapsulamento.totalPinos;
+        const r = retanguloDoChip(chip.placa, chip.colunaPino1, total);
         const grupo = criar("g", { class: "chip" });
         grupo.addEventListener("click", () => acoes.aoClicarChip(indice));
         grupo.addEventListener("mouseenter", () => acoes.aoEntrarNoChip(indice));
         grupo.addEventListener("mouseleave", () => acoes.aoSairDoChip());
 
         // Pernas: do furo de cada pino até ao corpo
-        for (const pino of TODOS_OS_PINOS) {
-            const p = posicaoDoFuro(furoDoPino(chip.placa, chip.colunaPino1, pino));
-            const yDoCorpo = pino <= 7 ? r.y + r.altura : r.y;
+        for (const pino of listaDePinos(total)) {
+            const p = posicaoDoFuro(furoDoPino(chip.placa, chip.colunaPino1, pino, total));
+            const yDoCorpo = pino <= total / 2 ? r.y + r.altura : r.y;
             grupo.append(criar("line", { x1: p.x, y1: p.y, x2: p.x, y2: yDoCorpo, class: "chip-perna" }));
         }
 
@@ -264,8 +266,8 @@ export function desenharSombraDoChip(svg: SVGElement, sombra: SombraDoChip | und
     const { avaliacao } = sombra;
 
     // Corpo fantasma: só quando os 14 pinos caem dentro da breadboard
-    if (avaliacao.furos.length === 14) {
-        const r = retanguloDoChip(sombra.placa, sombra.coluna);
+    if (avaliacao.furos.length === sombra.totalPinos) {
+        const r = retanguloDoChip(sombra.placa, sombra.coluna, sombra.totalPinos);
         camada.append(criar("rect", {
             x: r.x, y: r.y, width: r.largura, height: r.altura, rx: 1.5,
             class: avaliacao.valida ? "sombra-corpo valida" : "sombra-corpo invalida",

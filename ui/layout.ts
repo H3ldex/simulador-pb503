@@ -2,9 +2,10 @@ import {
     COLUNAS_POR_BREADBOARD,
     FILAS_ALIMENTACAO,
     FUROS_POR_FILA_DE_BARRAMENTO,
-    NUMERO_DE_BREADBOARDS,
+    NUMERO_DE_BREADBOARDS,    
 } from "../src/baseMontagem";
 import { furoDoPino } from "../src/montagem";
+import type { NumeroPino } from "../src/pinos";
 
 // Posições no desenho, em unidades do viewBox do SVG.
 // Este ficheiro não usa o DOM: só faz contas, e por isso pode ser testado.
@@ -137,16 +138,17 @@ export function posicaoDoInterruptor(numero: number): Ponto {
     };
 }
 
-// Corpo de um chip: entre as linhas E e F, a cobrir os 7 pinos de cada lado
-export function retanguloDoChip(placa: number, colunaPino1: number): Retangulo {
-    const pino1 = posicaoDoFuro(furoDoPino(placa, colunaPino1, 1));
-    const pino7 = posicaoDoFuro(furoDoPino(placa, colunaPino1, 7));
-    const pino14 = posicaoDoFuro(furoDoPino(placa, colunaPino1, 14));
+// Corpo de um chip: entre as linhas E e F, a cobrir todos os pinos
+export function retanguloDoChip(placa: number, colunaPino1: number, totalPinos: 14 | 16 = 14): Retangulo {
+    const ultimoDeBaixo: NumeroPino = totalPinos === 14 ? 7 : 8;
+    const pino1 = posicaoDoFuro(furoDoPino(placa, colunaPino1, 1, totalPinos));
+    const pinoUltimoDeBaixo = posicaoDoFuro(furoDoPino(placa, colunaPino1, ultimoDeBaixo, totalPinos));
+    const pinoDeCima = posicaoDoFuro(furoDoPino(placa, colunaPino1, totalPinos, totalPinos));
     const margem = PASSO * 0.6;
     return {
         x: pino1.x - margem,
-        y: pino14.y + margem,
-        largura: pino7.x - pino1.x + 2 * margem,
-        altura: pino1.y - pino14.y - 2 * margem,
+        y: pinoDeCima.y + margem,
+        largura: pinoUltimoDeBaixo.x - pino1.x + 2 * margem,
+        altura: pino1.y - pinoDeCima.y - 2 * margem,
     };
 }

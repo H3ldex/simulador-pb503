@@ -64,4 +64,32 @@ describe("furosDoChip", () => {
         }
         expect(nos.size).toBe(14);
     });
+
+    describe("furoDoPino num DIP-16", () => {
+        const casos: [NumeroPino, string][] = [
+            [1,  "P1:F:10"],   // canto inferior esquerdo
+            [8,  "P1:F:17"],   // GND, canto inferior direito
+            [9,  "P1:E:17"],   // canto superior direito
+            [16, "P1:E:10"],   // VCC, canto superior esquerdo
+        ];
+    
+        it.each(casos)("pino %s fica no furo %s", (pino, furo) => {
+            expect(furoDoPino(1, 10, pino, 16)).toBe(furo);
+        });
+    
+        it("um DIP-16 ocupa 8 colunas: o pino 1 vai até à coluna 57", () => {
+            expect(furoDoPino(1, 57, 8, 16)).toBe("P1:F:64");
+            expect(() => furoDoPino(1, 58, 1, 16)).toThrow();
+        });
+    
+        it("um DIP-14 não tem pino 15", () => {
+            expect(() => furoDoPino(1, 10, 15)).toThrow("não tem o pino 15");
+        });
+    
+        it("um DIP-16 montado tem 16 furos diferentes", () => {
+            const furos = furosDoChip(1, 10, 16);
+            expect(furos.size).toBe(16);
+            expect(new Set(furos.values()).size).toBe(16);
+        });
+    });
 });
